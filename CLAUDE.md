@@ -168,6 +168,18 @@ secret/le-{client}-prod/*
 
 13 Alertmanager receivers → StackStorm `st2api:9101`. Alert state `le_code`: 0=Critical, 1=Warning, 2=OK, 4=Disabled, 5=Placeholder.
 
+## Monthly Cost (AWS ap-south-1)
+
+| Period | Cost | Notes |
+|---|---|---|
+| March 2026 (actual) | **$874** | Incl. EKS extended support ($223) + 3 node groups |
+| April 2026 (projected) | **~$510** | After 2026-03-30 optimizations |
+| **Monthly saving** | **$364** | EKS v1.34 upgrade + CW logging disabled |
+
+**April breakdown:** EC2 $140 · EKS control plane $73 · Hybrid nodes $53 · EBS $40 · Tax(GST) $56 · ALB $13 · VPC $13 · Other $10 · CloudWatch $3
+
+Daily run rate: **~$17/day** (was $31/day before optimizations)
+
 ## Contacts
 
 | Role | Name | Phone |
