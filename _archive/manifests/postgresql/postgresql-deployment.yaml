@@ -1,0 +1,174 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgresql-secret
+  namespace: le-cicd
+  labels:
+    app: postgresql
+    project: linkedeye
+type: Opaque
+stringData:
+  POSTGRES_PASSWORD: "LinkedEye@DB2026"
+  POSTGRES_USER: "linkedeye_admin"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-init
+  namespace: le-cicd
+  labels:
+    app: postgresql
+data:
+  init-databases.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "Creating LinkedEye databases..."
+
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" <<-EOSQL
+      -- Keycloak Database
+      CREATE DATABASE keycloak_db;
+      CREATE USER keycloak_user WITH ENCRYPTED PASSWORD 'Keycloak@DB2026';
+      GRANT ALL PRIVILEGES ON DATABASE keycloak_db TO keycloak_user;
+      ALTER DATABASE keycloak_db OWNER TO keycloak_user;
+
+      -- Harbor Database
+      CREATE DATABASE harbor_core;
+      CREATE DATABASE harbor_notary_server;
+      CREATE DATABASE harbor_notary_signer;
+      CREATE USER harbor_user WITH ENCRYPTED PASSWORD 'Harbor@DB2026';
+      GRANT ALL PRIVILEGES ON DATABASE harbor_core TO harbor_user;
+      GRANT ALL PRIVILEGES ON DATABASE harbor_notary_server TO harbor_user;
+      GRANT ALL PRIVILEGES ON DATABASE harbor_notary_signer TO harbor_user;
+      ALTER DATABASE harbor_core OWNER TO harbor_user;
+      ALTER DATABASE harbor_notary_server OWNER TO harbor_user;
+      ALTER DATABASE harbor_notary_signer OWNER TO harbor_user;
+
+      -- ArgoCD Database
+      CREATE DATABASE argocd_db;
+      CREATE USER argocd_user WITH ENCRYPTED PASSWORD 'ArgoCD@DB2026';
+      GRANT ALL PRIVILEGES ON DATABASE argocd_db TO argocd_user;
+      ALTER DATABASE argocd_db OWNER TO argocd_user;
+
+      -- Vault Database
+      CREATE DATABASE vault_db;
+      CREATE USER vault_user WITH ENCRYPTED PASSWORD 'Vault@DB2026';
+      GRANT ALL PRIVILEGES ON DATABASE vault_db TO vault_user;
+      ALTER DATABASE vault_db OWNER TO vault_user;
+
+      -- Jenkins Database (for future use)
+      CREATE DATABASE jenkins_db;
+      CREATE USER jenkins_user WITH ENCRYPTED PASSWORD 'Jenkins@DB2026';
+      GRANT ALL PRIVILEGES ON DATABASE jenkins_db TO jenkins_user;
+      ALTER DATABASE jenkins_db OWNER TO jenkins_user;
+    EOSQL
+
+    echo "All databases created successfully!"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgresql-data
+  namespace: le-cicd
+  labels:
+    app: postgresql
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+  namespace: le-cicd
+  labels:
+    app: postgresql
+    project: linkedeye
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      labels:
+        app: postgresql
+    spec:
+      containers:
+        - name: postgresql
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+              name: postgres
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: postgresql-data
+              mountPath: /var/lib/postgresql/data
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2
+              memory: 2Gi
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - linkedeye_admin
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - linkedeye_admin
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: postgresql-data
+          persistentVolumeClaim:
+            claimName: postgresql-data
+        - name: init-scripts
+          configMap:
+            name: postgresql-init
+            defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql
+  namespace: le-cicd
+  labels:
+    app: postgresql
+    project: linkedeye
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: postgres
+  selector:
+    app: postgresql
+  type: ClusterIP

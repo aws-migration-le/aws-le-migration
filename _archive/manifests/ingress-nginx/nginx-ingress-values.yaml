@@ -1,0 +1,32 @@
+# NGINX Ingress Controller Helm values for LinkedEye platform
+# Namespace: ingress-nginx
+# Install: helm install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx -f nginx-ingress-values.yaml
+
+controller:
+  service:
+    type: NodePort
+    nodePorts:
+      http: 30080
+      https: 30443
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+  config:
+    proxy-body-size: "100m"
+    proxy-read-timeout: "600"
+    proxy-send-timeout: "600"
+    use-forwarded-headers: "true"
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+
+  admissionWebhooks:
+    enabled: true

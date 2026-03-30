@@ -1,0 +1,47 @@
+# ArgoCD Helm values for LinkedEye platform
+# Namespace: le-cicd
+# Install: helm install argocd argo/argo-cd -n le-cicd -f argocd-values.yaml
+
+server:
+  service:
+    type: NodePort
+    nodePortHttp: 30082
+    nodePortHttps: 30445
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1
+      memory: 512Mi
+
+configs:
+  params:
+    server.insecure: true
+
+controller:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+
+repoServer:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+redis:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 128Mi

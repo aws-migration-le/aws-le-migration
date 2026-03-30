@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkedEye — Infrastructure Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #111827;
+    --bg-card: #1a2235;
+    --bg-card-hover: #1f2a40;
+    --border: #2a3550;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-blue: #3b82f6;
+    --accent-cyan: #06b6d4;
+    --accent-purple: #8b5cf6;
+    --accent-green: #10b981;
+    --accent-yellow: #f59e0b;
+    --accent-red: #ef4444;
+    --accent-orange: #f97316;
+    --accent-pink: #ec4899;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(59,130,246,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(139,92,246,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(6,182,212,0.05) 0%, transparent 70%);
+    z-index: 0;
+  }
+
+  .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; overflow: hidden; }
+  .particle { position: absolute; border-radius: 50%; opacity: 0.3; animation: floatUp linear infinite; }
+  @keyframes floatUp { 0% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 0.3; } 90% { opacity: 0.3; } 100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; } }
+
+  .container { position: relative; z-index: 1; max-width: 1600px; margin: 0 auto; padding: 24px; }
+
+  .header { text-align: center; padding: 40px 0 30px; position: relative; }
+  .header::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 200px; height: 2px; background: linear-gradient(90deg, transparent, var(--accent-cyan), var(--accent-purple), transparent); }
+  .logo-badge { display: inline-flex; align-items: center; gap: 12px; background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary)); border: 1px solid var(--border); border-radius: 16px; padding: 8px 24px 8px 12px; margin-bottom: 16px; box-shadow: 0 0 30px rgba(6,182,212,0.1); }
+  .logo-icon { width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; color: white; box-shadow: 0 4px 15px rgba(6,182,212,0.4); }
+  .logo-text { font-size: 22px; font-weight: 700; }
+  .logo-text span { color: var(--accent-cyan); }
+  .header h1 { font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 3px; color: var(--text-muted); margin-top: 16px; }
+  .header .update-time { font-size: 12px; color: var(--text-muted); margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
+
+  .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 30px 0; }
+  .stat-card { background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary)); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; position: relative; overflow: hidden; transition: all 0.3s ease; }
+  .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 16px 16px 0 0; }
+  .stat-card:nth-child(1)::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan)); }
+  .stat-card:nth-child(2)::before { background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); }
+  .stat-card:nth-child(3)::before { background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange)); }
+  .stat-card:nth-child(4)::before { background: linear-gradient(90deg, var(--accent-red), var(--accent-pink)); }
+  .stat-card:nth-child(5)::before { background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue)); }
+  .stat-card:nth-child(6)::before { background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink)); }
+  .stat-number { font-size: 36px; font-weight: 800; background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+  .stat-icon { font-size: 28px; margin-bottom: 8px; }
+
+  .progress-section { display: flex; align-items: center; justify-content: center; gap: 40px; margin: 30px 0; padding: 30px; background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary)); border: 1px solid var(--border); border-radius: 20px; }
+  .progress-ring-container { text-align: center; }
+  .progress-ring { width: 140px; height: 140px; transform: rotate(-90deg); }
+  .progress-ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+  .progress-ring-fill { fill: none; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 377; stroke-dashoffset: 377; transition: stroke-dashoffset 2s ease; }
+  .progress-pct { font-size: 32px; font-weight: 800; margin-top: -95px; position: relative; background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .progress-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
+  .progress-breakdown { display: flex; flex-direction: column; gap: 12px; }
+  .progress-item { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--text-secondary); }
+  .progress-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+  .progress-bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; min-width: 120px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 1.5s ease; }
+
+  .section { margin: 30px 0; }
+  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .section-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .section-title { font-size: 18px; font-weight: 700; }
+  .section-count { margin-left: auto; font-size: 12px; color: var(--text-muted); background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-family: 'JetBrains Mono', monospace; }
+
+  .resource-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 12px; }
+  .resource-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; align-items: flex-start; gap: 12px; transition: all 0.3s ease; position: relative; overflow: hidden; }
+  .resource-card:hover { background: var(--bg-card-hover); border-color: var(--accent-blue); transform: translateX(4px); }
+  .resource-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+  .resource-card.done::before { background: var(--accent-green); }
+  .resource-card.active::before { background: var(--accent-blue); }
+  .resource-card.running::before { background: var(--accent-cyan); }
+  .resource-card.pending::before { background: var(--accent-yellow); }
+  .resource-card.blocked::before,.resource-card.terminate::before { background: var(--accent-red); }
+
+  .resource-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .resource-info { flex: 1; min-width: 0; }
+  .resource-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .resource-id { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan); word-break: break-all; }
+  .resource-detail { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+  .badge { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; }
+  .badge-done { background: rgba(16,185,129,0.15); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.3); }
+  .badge-active { background: rgba(59,130,246,0.15); color: var(--accent-blue); border: 1px solid rgba(59,130,246,0.3); }
+  .badge-running { background: rgba(6,182,212,0.15); color: var(--accent-cyan); border: 1px solid rgba(6,182,212,0.3); animation: pulse 2s infinite; }
+  .badge-pending { background: rgba(245,158,11,0.15); color: var(--accent-yellow); border: 1px solid rgba(245,158,11,0.3); }
+  .badge-blocked { background: rgba(239,68,68,0.15); color: var(--accent-red); border: 1px solid rgba(239,68,68,0.3); }
+  .badge-terminate { background: rgba(239,68,68,0.1); color: var(--accent-red); border: 1px solid rgba(239,68,68,0.2); }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+  .routes-table { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
+  .routes-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); padding: 8px 16px; }
+  .routes-table td { padding: 12px 16px; background: var(--bg-card); font-size: 13px; }
+  .routes-table tr td:first-child { border-radius: 8px 0 0 8px; }
+  .routes-table tr td:last-child { border-radius: 0 8px 8px 0; }
+  .routes-table tr:hover td { background: var(--bg-card-hover); }
+  .route-domain { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--accent-cyan); }
+  .route-arrow { color: var(--accent-purple); font-weight: 600; }
+  .route-target { color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  .timeline { position: relative; padding-left: 30px; }
+  .timeline::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, var(--accent-green), var(--accent-yellow), var(--accent-red)); border-radius: 2px; }
+  .timeline-item { position: relative; margin-bottom: 16px; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; transition: all 0.3s; }
+  .timeline-item:hover { background: var(--bg-card-hover); transform: translateX(8px); }
+  .timeline-dot { position: absolute; left: -24px; top: 20px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--bg-primary); box-shadow: 0 0 10px currentColor; }
+  .timeline-item.done .timeline-dot { background: var(--accent-green); color: var(--accent-green); }
+  .timeline-item.pending .timeline-dot { background: var(--accent-yellow); color: var(--accent-yellow); animation: pulse 2s infinite; }
+  .timeline-item.blocked .timeline-dot { background: var(--accent-red); color: var(--accent-red); }
+  .timeline-title { font-size: 14px; font-weight: 600; }
+  .timeline-detail { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  .contact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .contact-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; gap: 14px; transition: all 0.3s; }
+  .contact-card:hover { background: var(--bg-card-hover); border-color: var(--accent-purple); transform: translateY(-2px); }
+  .contact-avatar { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: white; flex-shrink: 0; }
+  .contact-name { font-size: 14px; font-weight: 600; }
+  .contact-role { font-size: 12px; color: var(--text-muted); }
+  .contact-phone { font-size: 12px; color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
+
+  .arch-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; overflow-x: auto; }
+  .arch-svg { width: 100%; min-width: 800px; height: 420px; }
+
+  .footer { text-align: center; padding: 30px 0; margin-top: 40px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+
+  @media (max-width: 768px) { .container { padding: 12px; } .stats-bar { grid-template-columns: repeat(2, 1fr); } .resource-grid { grid-template-columns: 1fr; } .progress-section { flex-direction: column; } }
+</style>
+</head>
+<body>
+<div class="particles" id="particles"></div>
+<div class="container">
+
+  <div class="header">
+    <div class="logo-badge">
+      <div class="logo-icon">LE</div>
+      <div class="logo-text">Linked<span>Eye</span></div>
+    </div>
+    <h1>Infrastructure Deployment Dashboard</h1>
+    <div class="update-time">Last updated: 2026-03-11 &bull; Region: ap-south-1 (Mumbai) &bull; Account: 654697417727</div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-icon">&#9729;</div><div class="stat-number">78</div><div class="stat-label">Total Resources</div></div>
+    <div class="stat-card"><div class="stat-icon">&#10004;</div><div class="stat-number">68</div><div class="stat-label">Completed</div></div>
+    <div class="stat-card"><div class="stat-icon">&#9203;</div><div class="stat-number">7</div><div class="stat-label">Pending</div></div>
+    <div class="stat-card"><div class="stat-icon">&#9888;</div><div class="stat-number">3</div><div class="stat-label">To Terminate</div></div>
+    <div class="stat-card"><div class="stat-icon">&#128274;</div><div class="stat-number">3</div><div class="stat-label">KMS Keys</div></div>
+    <div class="stat-card"><div class="stat-icon">&#128737;</div><div class="stat-number">10</div><div class="stat-label">Security Groups</div></div>
+  </div>
+
+  <div class="progress-section">
+    <div class="progress-ring-container">
+      <svg class="progress-ring" viewBox="0 0 140 140">
+        <defs><linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#10b981"/><stop offset="100%" style="stop-color:#06b6d4"/></linearGradient></defs>
+        <circle class="progress-ring-bg" cx="70" cy="70" r="60"/>
+        <circle class="progress-ring-fill" cx="70" cy="70" r="60" stroke="url(#greenGrad)"/>
+      </svg>
+      <div class="progress-pct">87%</div>
+      <div class="progress-label">Overall Progress</div>
+    </div>
+    <div class="progress-breakdown">
+      <div class="progress-item"><div class="progress-dot" style="background:var(--accent-green)"></div><span style="min-width:110px">Network</span><div class="progress-bar-track"><div class="progress-bar-fill" style="width:92%;background:linear-gradient(90deg,var(--accent-green),var(--accent-cyan))"></div></div><span style="font-family:'JetBrains Mono';font-size:12px;color:var(--accent-green)">92%</span></div>
+      <div class="progress-item"><div class="progress-dot" style="background:var(--accent-green)"></div><span style="min-width:110px">IAM</span><div class="progress-bar-track"><div class="progress-bar-fill" style="width:100%;background:linear-gradient(90deg,var(--accent-green),var(--accent-cyan))"></div></div><span style="font-family:'JetBrains Mono';font-size:12px;color:var(--accent-green)">100%</span></div>
+      <div class="progress-item"><div class="progress-dot" style="background:var(--accent-cyan)"></div><span style="min-width:110px">Compute</span><div class="progress-bar-track"><div class="progress-bar-fill" style="width:70%;background:linear-gradient(90deg,var(--accent-cyan),var(--accent-blue))"></div></div><span style="font-family:'JetBrains Mono';font-size:12px;color:var(--accent-cyan)">70%</span></div>
+      <div class="progress-item"><div class="progress-dot" style="background:var(--accent-blue)"></div><span style="min-width:110px">EKS</span><div class="progress-bar-track"><div class="progress-bar-fill" style="width:85%;background:linear-gradient(90deg,var(--accent-blue),var(--accent-purple))"></div></div><span style="font-family:'JetBrains Mono';font-size:12px;color:var(--accent-blue)">85%</span></div>
+      <div class="progress-item"><div class="progress-dot" style="background:var(--accent-green)"></div><span style="min-width:110px">ALB</span><div class="progress-bar-track"><div class="progress-bar-fill" style="width:100%;background:linear-gradient(90deg,var(--accent-green),var(--accent-cyan))"></div></div><span style="font-family:'JetBrains Mono';font-size:12px;color:var(--accent-green)">100%</span></div>
+      <div class="progress-item"><div class="progress-dot" style="background:var(--accent-purple)"></div><span style="min-width:110px">Enterprise</span><div class="progress-bar-track"><div class="progress-bar-fill" style="width:75%;background:linear-gradient(90deg,var(--accent-purple),var(--accent-pink))"></div></div><span style="font-family:'JetBrains Mono';font-size:12px;color:var(--accent-purple)">75%</span></div>
+    </div>
+  </div>
+
+  <!-- Architecture -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:rgba(6,182,212,0.12)">&#127959;</div><div class="section-title">Architecture Overview</div></div>
+    <div class="arch-container">
+      <svg class="arch-svg" viewBox="0 0 900 420">
+        <rect x="30" y="20" width="840" height="380" rx="16" fill="none" stroke="#2a3550" stroke-width="2" stroke-dasharray="8,4"/>
+        <text x="50" y="50" fill="#64748b" font-size="12" font-family="JetBrains Mono">VPC 10.100.0.0/16 (ap-south-1)</text>
+        <rect x="50" y="65" width="500" height="155" rx="12" fill="rgba(16,185,129,0.06)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="70" y="85" fill="#10b981" font-size="11" font-weight="600" font-family="Inter">PUBLIC SUBNET (10.100.1.0/24 + 10.100.2.0/24)</text>
+        <rect x="70" y="95" width="120" height="55" rx="8" fill="rgba(139,92,246,0.15)" stroke="#8b5cf6" stroke-width="1.5"/>
+        <text x="92" y="118" fill="#8b5cf6" font-size="12" font-weight="700">ALB</text>
+        <text x="82" y="135" fill="#94a3b8" font-size="9" font-family="JetBrains Mono">*.finspot.in</text>
+        <rect x="220" y="95" width="140" height="55" rx="8" fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="242" y="115" fill="#3b82f6" font-size="11" font-weight="700">EC2-A Jenkins</text>
+        <text x="240" y="132" fill="#94a3b8" font-size="9" font-family="JetBrains Mono">52.66.205.68:8080</text>
+        <text x="250" y="144" fill="#64748b" font-size="8">m5.xlarge (4C/16G)</text>
+        <rect x="390" y="95" width="140" height="115" rx="8" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1.5"/>
+        <text x="410" y="115" fill="#06b6d4" font-size="11" font-weight="700">EC2-B Mgmt+ITSM</text>
+        <text x="400" y="132" fill="#94a3b8" font-size="9" font-family="JetBrains Mono">35.154.229.24</text>
+        <text x="402" y="148" fill="#64748b" font-size="8">Harbor :5000/:8083</text>
+        <text x="402" y="160" fill="#64748b" font-size="8">ArgoCD :8082  Vault :8200</text>
+        <text x="402" y="172" fill="#64748b" font-size="8">Keycloak :8081  ITSM :80</text>
+        <text x="402" y="184" fill="#64748b" font-size="8">PostgreSQL :5432</text>
+        <text x="412" y="200" fill="#64748b" font-size="8">m5.2xlarge (8C/32G)</text>
+        <line x1="190" y1="120" x2="218" y2="115" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrowP)"/>
+        <line x1="190" y1="125" x2="388" y2="140" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrowP)"/>
+        <rect x="70" y="160" width="120" height="45" rx="8" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="88" y="180" fill="#f59e0b" font-size="11" font-weight="600">NAT Gateway</text>
+        <text x="80" y="196" fill="#94a3b8" font-size="9" font-family="JetBrains Mono">13.233.176.240</text>
+        <rect x="50" y="235" width="500" height="80" rx="12" fill="rgba(59,130,246,0.04)" stroke="#3b82f6" stroke-width="1" stroke-dasharray="6,3"/>
+        <text x="70" y="255" fill="#3b82f6" font-size="11" font-weight="600">PRIVATE SUBNETS (EKS Control Plane ENIs)</text>
+        <text x="70" y="275" fill="#94a3b8" font-size="9" font-family="JetBrains Mono">subnet-081fd (10.100.11.0/24 AZ1b) | subnet-0d7fd (10.100.12.0/24 AZ1c)</text>
+        <text x="70" y="295" fill="#64748b" font-size="9">EKS API: 6AA304CE...gr7.ap-south-1.eks.amazonaws.com</text>
+        <rect x="580" y="65" width="270" height="250" rx="14" fill="rgba(139,92,246,0.06)" stroke="#8b5cf6" stroke-width="1.5"/>
+        <text x="640" y="88" fill="#8b5cf6" font-size="13" font-weight="700">EKS: le-shared-eks v1.30</text>
+        <text x="620" y="105" fill="#64748b" font-size="10">Hybrid Nodes (Control Plane AWS)</text>
+        <rect x="600" y="115" width="110" height="45" rx="6" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1"/>
+        <text x="613" y="133" fill="#10b981" font-size="10" font-weight="600">le-workloads</text>
+        <text x="612" y="150" fill="#64748b" font-size="8">PSS: restricted</text>
+        <rect x="725" y="115" width="110" height="45" rx="6" fill="rgba(6,182,212,0.1)" stroke="#06b6d4" stroke-width="1"/>
+        <text x="735" y="133" fill="#06b6d4" font-size="10" font-weight="600">le-monitoring</text>
+        <text x="740" y="150" fill="#64748b" font-size="8">PSS: baseline</text>
+        <text x="600" y="182" fill="#94a3b8" font-size="10" font-weight="600">Addons:</text>
+        <rect x="600" y="190" width="65" height="22" rx="4" fill="rgba(59,130,246,0.15)"/><text x="610" y="205" fill="#3b82f6" font-size="9">vpc-cni</text>
+        <rect x="672" y="190" width="65" height="22" rx="4" fill="rgba(59,130,246,0.15)"/><text x="680" y="205" fill="#3b82f6" font-size="9">coredns</text>
+        <rect x="744" y="190" width="72" height="22" rx="4" fill="rgba(59,130,246,0.15)"/><text x="750" y="205" fill="#3b82f6" font-size="9">kube-proxy</text>
+        <rect x="600" y="218" width="62" height="22" rx="4" fill="rgba(59,130,246,0.15)"/><text x="607" y="233" fill="#3b82f6" font-size="9">ebs-csi</text>
+        <rect x="669" y="218" width="85" height="22" rx="4" fill="rgba(6,182,212,0.15)"/><text x="673" y="233" fill="#06b6d4" font-size="9">cw-insights</text>
+        <rect x="600" y="252" width="235" height="48" rx="8" fill="rgba(245,158,11,0.08)" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="640" y="272" fill="#f59e0b" font-size="10" font-weight="600">On-Prem Workers (Hybrid)</text>
+        <text x="630" y="290" fill="#64748b" font-size="9">Per-client nodes via VPN + SSM</text>
+        <line x1="550" y1="275" x2="598" y2="275" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arrowY)"/>
+        <text x="553" y="268" fill="#f59e0b" font-size="8">VPN</text>
+        <rect x="50" y="330" width="820" height="55" rx="12" fill="rgba(239,68,68,0.04)" stroke="#ef4444" stroke-width="1"/>
+        <text x="70" y="352" fill="#ef4444" font-size="11" font-weight="700">&#128274; Security Layer</text>
+        <text x="70" y="372" fill="#94a3b8" font-size="9">KMS (3 keys) &bull; WAF &bull; IMDSv2 &bull; GuardDuty &bull; VPC Flow Logs &bull; CloudTrail &bull; PSS &bull; RBAC &bull; EBS Encryption</text>
+        <defs>
+          <marker id="arrowP" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8b5cf6"/></marker>
+          <marker id="arrowY" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Network -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:rgba(16,185,129,0.12)">&#127760;</div><div class="section-title">Network Infrastructure</div><div class="section-count">12 resources</div></div>
+    <div class="resource-grid">
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#127760;</div><div class="resource-info"><div class="resource-name">VPC</div><div class="resource-id">vpc-0b902465605d6c6d6</div><div class="resource-detail">CIDR: 10.100.0.0/16</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#9650;</div><div class="resource-info"><div class="resource-name">Public Subnet AZ1a</div><div class="resource-id">subnet-074f1da66fc7166fb</div><div class="resource-detail">10.100.1.0/24</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#9650;</div><div class="resource-info"><div class="resource-name">Public Subnet AZ1b</div><div class="resource-id">subnet-0b0e89de77a4c35a1</div><div class="resource-detail">10.100.2.0/24</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(59,130,246,0.12)">&#9660;</div><div class="resource-info"><div class="resource-name">Private Subnet AZ1a</div><div class="resource-id">subnet-065784ff2566bace7</div><div class="resource-detail">10.100.10.0/24</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(139,92,246,0.12)">&#9660;</div><div class="resource-info"><div class="resource-name">EKS Subnet AZ1b</div><div class="resource-id">subnet-081fd4945c6460889</div><div class="resource-detail">10.100.11.0/24</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(139,92,246,0.12)">&#9660;</div><div class="resource-info"><div class="resource-name">EKS Subnet AZ1c</div><div class="resource-id">subnet-0d7fda38d5e1b0566</div><div class="resource-detail">10.100.12.0/24</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#8645;</div><div class="resource-info"><div class="resource-name">Internet Gateway</div><div class="resource-id">igw-03f7860ecc90aafd4</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(245,158,11,0.12)">&#8644;</div><div class="resource-info"><div class="resource-name">NAT Gateway</div><div class="resource-id">nat-06401f68c43ff9511</div><div class="resource-detail">EIP: 13.233.176.240</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card pending"><div class="resource-icon" style="background:rgba(245,158,11,0.12)">&#128272;</div><div class="resource-info"><div class="resource-name">Site-to-Site VPN</div><div class="resource-id">Waiting for FortiGate public IP</div><div class="resource-detail">Contact: Siva +91-960-368-3828</div></div><span class="badge badge-pending">Pending</span></div>
+    </div>
+  </div>
+
+  <!-- Compute -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:rgba(59,130,246,0.12)">&#128187;</div><div class="section-title">Compute Instances</div><div class="section-count">2 active + 3 legacy</div></div>
+    <div class="resource-grid">
+      <div class="resource-card running"><div class="resource-icon" style="background:rgba(6,182,212,0.15)">&#9881;</div><div class="resource-info"><div class="resource-name">EC2-A: Jenkins CI/CD</div><div class="resource-id">i-049223927d8d7f199</div><div class="resource-detail">m5.xlarge (4C/16G) &bull; IP: 52.66.205.68 &bull; IMDSv2 &bull; 100GB+200GB gp3</div></div><span class="badge badge-running">Running</span></div>
+      <div class="resource-card running"><div class="resource-icon" style="background:rgba(6,182,212,0.15)">&#9881;</div><div class="resource-info"><div class="resource-name">EC2-B: Mgmt + ITSM</div><div class="resource-id">i-0670d052f2b68d2b7</div><div class="resource-detail">m5.2xlarge (8C/32G) &bull; IP: 35.154.229.24 &bull; IMDSv2 &bull; 100GB+200GB gp3</div></div><span class="badge badge-running">Running</span></div>
+      <div class="resource-card terminate"><div class="resource-icon" style="background:rgba(239,68,68,0.1)">&#128465;</div><div class="resource-info"><div class="resource-name">Old K8s Master</div><div class="resource-id">i-0254e6bd512f67dd9</div><div class="resource-detail">10.100.10.10 — To be terminated</div></div><span class="badge badge-terminate">Terminate</span></div>
+      <div class="resource-card terminate"><div class="resource-icon" style="background:rgba(239,68,68,0.1)">&#128465;</div><div class="resource-info"><div class="resource-name">Old K8s Worker</div><div class="resource-id">i-0e0662a64aa8cc8e6</div><div class="resource-detail">10.100.10.20 — To be terminated</div></div><span class="badge badge-terminate">Terminate</span></div>
+      <div class="resource-card terminate"><div class="resource-icon" style="background:rgba(239,68,68,0.1)">&#128465;</div><div class="resource-info"><div class="resource-name">Old Bastion</div><div class="resource-id">i-07437f1f803efdb4e</div><div class="resource-detail">13.232.44.137 — To be terminated</div></div><span class="badge badge-terminate">Terminate</span></div>
+    </div>
+  </div>
+
+  <!-- Services -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:rgba(245,158,11,0.12)">&#128230;</div><div class="section-title">Docker Compose Services</div><div class="section-count">7 services</div></div>
+    <div class="resource-grid">
+      <div class="resource-card pending"><div class="resource-icon" style="background:rgba(59,130,246,0.12)">&#9881;</div><div class="resource-info"><div class="resource-name">Jenkins</div><div class="resource-id">jenkins.finspot.in &rarr; EC2-A:8080</div></div><span class="badge badge-pending">Pending</span></div>
+      <div class="resource-card pending"><div class="resource-icon" style="background:rgba(6,182,212,0.12)">&#128230;</div><div class="resource-info"><div class="resource-name">Harbor Registry</div><div class="resource-id">harbor.finspot.in &rarr; EC2-B:8083</div></div><span class="badge badge-pending">Pending</span></div>
+      <div class="resource-card pending"><div class="resource-icon" style="background:rgba(139,92,246,0.12)">&#128256;</div><div class="resource-info"><div class="resource-name">ArgoCD</div><div class="resource-id">argocd.finspot.in &rarr; EC2-B:8082</div></div><span class="badge badge-pending">Pending</span></div>
+      <div class="resource-card pending"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#128273;</div><div class="resource-info"><div class="resource-name">Keycloak</div><div class="resource-id">keycloak.finspot.in &rarr; EC2-B:8081</div></div><span class="badge badge-pending">Pending</span></div>
+      <div class="resource-card pending"><div class="resource-icon" style="background:rgba(245,158,11,0.12)">&#128272;</div><div class="resource-info"><div class="resource-name">Vault</div><div class="resource-id">vault.finspot.in &rarr; EC2-B:8200</div></div><span class="badge badge-pending">Pending</span></div>
+      <div class="resource-card pending"><div class="resource-icon" style="background:rgba(139,92,246,0.12)">&#128451;</div><div class="resource-info"><div class="resource-name">PostgreSQL</div><div class="resource-id">EC2-B:5432 (internal)</div></div><span class="badge badge-pending">Pending</span></div>
+      <div class="resource-card pending"><div class="resource-icon" style="background:rgba(236,72,153,0.12)">&#127919;</div><div class="resource-info"><div class="resource-name">ITSM Platform</div><div class="resource-id">fs-le-dev-inc.finspot.in &rarr; EC2-B:80</div></div><span class="badge badge-pending">Pending</span></div>
+    </div>
+  </div>
+
+  <!-- EKS -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:rgba(139,92,246,0.12)">&#9096;</div><div class="section-title">EKS Cluster: le-shared-eks</div><div class="section-count">v1.30 Hybrid</div></div>
+    <div class="resource-grid">
+      <div class="resource-card active"><div class="resource-icon" style="background:rgba(139,92,246,0.15)">&#9096;</div><div class="resource-info"><div class="resource-name">Cluster</div><div class="resource-id">le-shared-eks (v1.30) — Hybrid Nodes</div><div class="resource-detail">Public+Private endpoint &bull; Secrets encryption (KMS)</div></div><span class="badge badge-active">Active</span></div>
+      <div class="resource-card active"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#128194;</div><div class="resource-info"><div class="resource-name">le-workloads</div><div class="resource-id">PSS: restricted &bull; Quota: 16CPU/32Gi/100pods</div></div><span class="badge badge-active">Active</span></div>
+      <div class="resource-card active"><div class="resource-icon" style="background:rgba(6,182,212,0.12)">&#128194;</div><div class="resource-info"><div class="resource-name">le-monitoring</div><div class="resource-id">PSS: baseline &bull; Quota: 8CPU/16Gi/50pods</div></div><span class="badge badge-active">Active</span></div>
+      <div class="resource-card active"><div class="resource-icon" style="background:rgba(59,130,246,0.12)">&#128268;</div><div class="resource-info"><div class="resource-name">Addons (5)</div><div class="resource-id">vpc-cni &bull; coredns &bull; kube-proxy &bull; ebs-csi &bull; cloudwatch-observability</div></div><span class="badge badge-active">Active</span></div>
+      <div class="resource-card active"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#128101;</div><div class="resource-info"><div class="resource-name">RBAC (4 ClusterRoles)</div><div class="resource-id">argocd-deployer &bull; jenkins-ci &bull; prometheus-reader &bull; client-admin</div></div><span class="badge badge-active">Active</span></div>
+      <div class="resource-card pending"><div class="resource-icon" style="background:rgba(245,158,11,0.12)">&#128421;</div><div class="resource-info"><div class="resource-name">Worker Nodes</div><div class="resource-id">0 nodes — On-prem via VPN + SSM</div></div><span class="badge badge-pending">Pending VPN</span></div>
+    </div>
+  </div>
+
+  <!-- ALB Routes -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:rgba(139,92,246,0.12)">&#128279;</div><div class="section-title">ALB Routing (*.finspot.in)</div><div class="section-count">6 routes</div></div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+      <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:12px;color:var(--text-muted)">
+        <div><strong style="color:var(--text-secondary)">ALB DNS:</strong> <span style="color:var(--accent-cyan);font-family:'JetBrains Mono'">linkedeye-tools-alb-410755002.ap-south-1.elb.amazonaws.com</span></div>
+        <div><strong style="color:var(--text-secondary)">SSL:</strong> <span style="color:var(--accent-green)">GoDaddy *.finspot.in (TLS 1.3)</span></div>
+        <div><strong style="color:var(--text-secondary)">WAF:</strong> <span style="color:var(--accent-green)">3 rule groups + rate limit</span></div>
+      </div>
+    </div>
+    <table class="routes-table">
+      <thead><tr><th>Domain</th><th></th><th>Target</th><th>Service</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><span class="route-domain">jenkins.finspot.in</span></td><td><span class="route-arrow">&rarr;</span></td><td><span class="route-target">EC2-A:8080</span></td><td>Jenkins CI/CD</td><td><span class="badge badge-active">Active</span></td></tr>
+        <tr><td><span class="route-domain">argocd.finspot.in</span></td><td><span class="route-arrow">&rarr;</span></td><td><span class="route-target">EC2-B:8082</span></td><td>ArgoCD GitOps</td><td><span class="badge badge-active">Active</span></td></tr>
+        <tr><td><span class="route-domain">harbor.finspot.in</span></td><td><span class="route-arrow">&rarr;</span></td><td><span class="route-target">EC2-B:8083</span></td><td>Harbor Registry</td><td><span class="badge badge-active">Active</span></td></tr>
+        <tr><td><span class="route-domain">keycloak.finspot.in</span></td><td><span class="route-arrow">&rarr;</span></td><td><span class="route-target">EC2-B:8081</span></td><td>Keycloak SSO</td><td><span class="badge badge-active">Active</span></td></tr>
+        <tr><td><span class="route-domain">vault.finspot.in</span></td><td><span class="route-arrow">&rarr;</span></td><td><span class="route-target">EC2-B:8200</span></td><td>HashiCorp Vault</td><td><span class="badge badge-active">Active</span></td></tr>
+        <tr><td><span class="route-domain">fs-le-dev-inc.finspot.in</span></td><td><span class="route-arrow">&rarr;</span></td><td><span class="route-target">EC2-B:80</span></td><td>ITSM Platform</td><td><span class="badge badge-active">Active</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Enterprise Security -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:rgba(239,68,68,0.12)">&#128274;</div><div class="section-title">Enterprise Security & Compliance</div><div class="section-count">12 controls</div></div>
+    <div class="resource-grid">
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#128273;</div><div class="resource-info"><div class="resource-name">KMS: EKS Secrets</div><div class="resource-id">79f25c77-3399-457e-9981-61ab6a59440f</div><div class="resource-detail">Envelope encryption &bull; Annual rotation</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#128273;</div><div class="resource-info"><div class="resource-name">KMS: Vault Auto-Unseal</div><div class="resource-id">6e42d4e7-7d23-48c3-9956-47e3e3ec79f0</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#128273;</div><div class="resource-info"><div class="resource-name">KMS: EBS Encryption</div><div class="resource-id">c58c1e22-a9a7-48f3-a5f1-f50d67c6695e</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#128274;</div><div class="resource-info"><div class="resource-name">IMDSv2 Enforced</div><div class="resource-id">HttpTokens=required / HopLimit=2</div><div class="resource-detail">All EC2s &bull; Prevents SSRF</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#128737;</div><div class="resource-info"><div class="resource-name">Pod Security Standards</div><div class="resource-id">restricted / baseline / privileged</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#128065;</div><div class="resource-info"><div class="resource-name">GuardDuty</div><div class="resource-id">9a9ec673e09f465188403236ae0fcb31</div><div class="resource-detail">EKS Audit + Runtime + EC2 Runtime</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#128202;</div><div class="resource-info"><div class="resource-name">VPC Flow Logs</div><div class="resource-id">/aws/vpc/flowlogs/linkedeye</div><div class="resource-detail">ALL traffic &bull; 90-day retention</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#128220;</div><div class="resource-info"><div class="resource-name">CloudTrail</div><div class="resource-id">linkedeye-audit-trail</div><div class="resource-detail">Multi-region &bull; S3 data events &bull; Glacier 90d</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#127757;</div><div class="resource-info"><div class="resource-name">WAF on ALB</div><div class="resource-id">linkedeye-waf-acl</div><div class="resource-detail">Common Rules + Bad Inputs + SQLi + Rate Limit</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#128190;</div><div class="resource-info"><div class="resource-name">EBS Default Encryption</div><div class="resource-id">Region-wide via KMS CMK</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(6,182,212,0.12)">&#128200;</div><div class="resource-info"><div class="resource-name">Container Insights</div><div class="resource-id">CloudWatch observability addon</div></div><span class="badge badge-done">Done</span></div>
+      <div class="resource-card done"><div class="resource-icon" style="background:rgba(16,185,129,0.12)">&#128101;</div><div class="resource-info"><div class="resource-name">RBAC + Resource Quotas</div><div class="resource-id">4 ClusterRoles + LimitRanges per namespace</div></div><span class="badge badge-done">Done</span></div>
+    </div>
+  </div>
+
+  <!-- Pending Timeline -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:rgba(245,158,11,0.12)">&#128203;</div><div class="section-title">Pending Actions Timeline</div><div class="section-count">7 items</div></div>
+    <div class="timeline">
+      <div class="timeline-item pending"><div class="timeline-dot"></div><div class="timeline-title">1. Create DNS CNAME Record</div><div class="timeline-detail">*.finspot.in &rarr; linkedeye-tools-alb-410755002.ap-south-1.elb.amazonaws.com (GoDaddy DNS)</div></div>
+      <div class="timeline-item pending"><div class="timeline-dot"></div><div class="timeline-title">2. Docker Compose on EC2-A &amp; EC2-B</div><div class="timeline-detail">SSH to 52.66.205.68 (Jenkins) &amp; 35.154.229.24 (Harbor, ArgoCD, Keycloak, Vault, PG, ITSM)</div></div>
+      <div class="timeline-item pending"><div class="timeline-dot"></div><div class="timeline-title">3. Vault TLS + KMS Auto-Unseal</div><div class="timeline-detail">Script 12-enterprise/06 — Needs Vault running first</div></div>
+      <div class="timeline-item pending"><div class="timeline-dot"></div><div class="timeline-title">4. External Secrets Operator</div><div class="timeline-detail">Script 12-enterprise/12 — Needs Vault TLS from step 3</div></div>
+      <div class="timeline-item blocked"><div class="timeline-dot"></div><div class="timeline-title">5. VPN Tunnel (Site-to-Site)</div><div class="timeline-detail">BLOCKED: Waiting for FortiGate public IP from Siva (+91-960-368-3828)</div></div>
+      <div class="timeline-item blocked"><div class="timeline-dot"></div><div class="timeline-title">6. Prometheus + Grafana + Velero</div><div class="timeline-detail">BLOCKED: Helm needs worker nodes (after VPN + Hybrid registration)</div></div>
+      <div class="timeline-item blocked"><div class="timeline-dot"></div><div class="timeline-title">7. Terminate Old EC2s (3 instances)</div><div class="timeline-detail">i-0254e6bd512f67dd9, i-0e0662a64aa8cc8e6, i-07437f1f803efdb4e — After full migration verified</div></div>
+    </div>
+  </div>
+
+  <!-- Contacts -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:rgba(236,72,153,0.12)">&#128100;</div><div class="section-title">Team Contacts</div></div>
+    <div class="contact-grid">
+      <div class="contact-card"><div class="contact-avatar" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">RM</div><div><div class="contact-name">Rajkumar Madhu</div><div class="contact-role">CTO / DevOps Lead</div><div class="contact-phone">+91-917-677-2077</div></div></div>
+      <div class="contact-card"><div class="contact-avatar" style="background:linear-gradient(135deg,#10b981,#06b6d4)">HB</div><div><div class="contact-name">Hoysala Bise</div><div class="contact-role">Ops Lead</div><div class="contact-phone">+91-998-014-6101</div></div></div>
+      <div class="contact-card"><div class="contact-avatar" style="background:linear-gradient(135deg,#f59e0b,#f97316)">SK</div><div><div class="contact-name">Siva Kadirannagari</div><div class="contact-role">Network Lead (VPN/FW)</div><div class="contact-phone">+91-960-368-3828</div></div></div>
+      <div class="contact-card"><div class="contact-avatar" style="background:linear-gradient(135deg,#ec4899,#ef4444)">RA</div><div><div class="contact-name">Rajkumar Ashokan</div><div class="contact-role">DBA</div><div class="contact-phone">+91-975-189-2775</div></div></div>
+    </div>
+  </div>
+
+  <!-- Quick Commands -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:rgba(6,182,212,0.12)">&#128187;</div><div class="section-title">Quick Access Commands</div></div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:2.2">
+      <div style="color:var(--text-muted)"># SSH to instances</div>
+      <div style="color:var(--accent-cyan)">ssh ubuntu@52.66.205.68 -i ~/.ssh/le-shared-k8s-key.pem <span style="color:var(--text-muted)"># EC2-A Jenkins</span></div>
+      <div style="color:var(--accent-cyan)">ssh ubuntu@35.154.229.24 -i ~/.ssh/le-shared-k8s-key.pem <span style="color:var(--text-muted)"># EC2-B Mgmt+ITSM</span></div>
+      <div style="margin-top:8px;color:var(--text-muted)"># EKS kubectl</div>
+      <div style="color:var(--accent-green)">aws eks update-kubeconfig --name le-shared-eks --region ap-south-1</div>
+      <div style="color:var(--accent-green)">kubectl get nodes</div>
+      <div style="color:var(--accent-green)">kubectl get pods -A</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Linked<span style="color:var(--accent-cyan)">Eye</span> Infrastructure Dashboard</div>
+    <div>FinSpot Technology Solutions &bull; AWS Account 654697417727 &bull; Region ap-south-1 (Mumbai)</div>
+    <div style="margin-top:4px">Generated 2026-03-11 &bull; Built with Claude Code</div>
+  </div>
+
+</div>
+
+<script>
+const particlesEl = document.getElementById('particles');
+const colors = ['#3b82f6','#06b6d4','#8b5cf6','#10b981','#f59e0b'];
+for (let i = 0; i < 30; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const size = Math.random() * 4 + 2;
+  p.style.width = size + 'px'; p.style.height = size + 'px';
+  p.style.left = Math.random() * 100 + '%';
+  p.style.background = colors[Math.floor(Math.random() * colors.length)];
+  p.style.animationDuration = (Math.random() * 20 + 15) + 's';
+  p.style.animationDelay = (Math.random() * 20) + 's';
+  particlesEl.appendChild(p);
+}
+
+window.addEventListener('load', () => {
+  const fill = document.querySelector('.progress-ring-fill');
+  const circumference = 2 * Math.PI * 60;
+  const offset = circumference - (87 / 100) * circumference;
+  setTimeout(() => { fill.style.strokeDashoffset = offset; }, 300);
+});
+
+document.querySelector('.update-time').innerHTML =
+  'Last updated: ' + new Date().toLocaleString() + ' &bull; Region: ap-south-1 (Mumbai) &bull; Account: 654697417727';
+</script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+# Harbor Helm values for LinkedEye platform
+# Namespace: le-cicd
+# Install: helm install harbor harbor/harbor -n le-cicd -f harbor-values.yaml
+
+expose:
+  type: nodePort
+  tls:
+    enabled: false
+  nodePort:
+    ports:
+      http:
+        nodePort: 30083
+
+externalURL: http://harbor.fs.le.finspot.in
+
+harborAdminPassword: LinkedEye@2026
+
+database:
+  type: external
+  external:
+    host: postgresql.le-cicd.svc.cluster.local
+    port: 5432
+    username: harbor_user
+    password: Harbor@DB2026
+    coreDatabase: harbor_core
+    notaryServerDatabase: harbor_notary_server
+    notarySignerDatabase: harbor_notary_signer
+
+persistence:
+  enabled: true
+  persistentVolumeClaim:
+    registry:
+      storageClass: local-path
+      size: 50Gi
+    jobservice:
+      jobLog:
+        storageClass: local-path
+        size: 1Gi
+    trivy:
+      storageClass: local-path
+      size: 5Gi
+
+redis:
+  type: internal
+
+trivy:
+  enabled: true

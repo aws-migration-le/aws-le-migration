@@ -1,0 +1,163 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backup-minio-secret
+  namespace: le-cicd
+  labels:
+    app: postgresql-backup
+type: Opaque
+stringData:
+  AWS_ACCESS_KEY_ID: "minioadmin"
+  AWS_SECRET_ACCESS_KEY: "LinkedEye@2026"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-script
+  namespace: le-cicd
+data:
+  backup.sh: |
+    #!/bin/bash
+    set -e
+
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    BACKUP_DIR="/tmp/backups"
+    MINIO_ENDPOINT="http://minio.le-cicd.svc.cluster.local:9000"
+    BUCKET="le-db-backups"
+
+    mkdir -p $BACKUP_DIR
+
+    echo "=== PostgreSQL Backup Started: $TIMESTAMP ==="
+
+    # Create MinIO bucket if not exists
+    mc alias set leminio $MINIO_ENDPOINT $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY --api S3v4 2>/dev/null
+    mc mb leminio/$BUCKET --ignore-existing 2>/dev/null
+
+    # Backup each database
+    DATABASES="keycloak_db harbor_core argocd_db vault_db jenkins_db"
+
+    for DB in $DATABASES; do
+      echo "Backing up $DB..."
+      PGPASSWORD=$POSTGRES_PASSWORD pg_dump \
+        -h postgresql.le-cicd.svc.cluster.local \
+        -U linkedeye_admin \
+        -d $DB \
+        -F c \
+        -f $BACKUP_DIR/${DB}_${TIMESTAMP}.dump
+
+      # Upload to MinIO
+      mc cp $BACKUP_DIR/${DB}_${TIMESTAMP}.dump leminio/$BUCKET/$DB/${DB}_${TIMESTAMP}.dump
+      echo "$DB backup uploaded to MinIO: $BUCKET/$DB/${DB}_${TIMESTAMP}.dump"
+    done
+
+    # Full cluster backup
+    echo "Full cluster backup..."
+    PGPASSWORD=$POSTGRES_PASSWORD pg_dumpall \
+      -h postgresql.le-cicd.svc.cluster.local \
+      -U linkedeye_admin \
+      -f $BACKUP_DIR/full_backup_${TIMESTAMP}.sql
+
+    mc cp $BACKUP_DIR/full_backup_${TIMESTAMP}.sql leminio/$BUCKET/full/full_backup_${TIMESTAMP}.sql
+    echo "Full backup uploaded to MinIO"
+
+    # Clean up local files
+    rm -rf $BACKUP_DIR
+
+    # Delete backups older than 7 days from MinIO
+    mc rm --recursive --force --older-than 7d leminio/$BUCKET/ 2>/dev/null || true
+
+    echo "=== Backup Completed: $(date) ==="
+
+  restore.sh: |
+    #!/bin/bash
+    set -e
+
+    # Usage: ./restore.sh <database_name> <dump_file_in_minio>
+    # Example: ./restore.sh keycloak_db keycloak_db/keycloak_db_20260307_120000.dump
+
+    DB_NAME=$1
+    DUMP_FILE=$2
+    MINIO_ENDPOINT="http://minio.le-cicd.svc.cluster.local:9000"
+    BUCKET="le-db-backups"
+
+    if [ -z "$DB_NAME" ] || [ -z "$DUMP_FILE" ]; then
+      echo "Usage: $0 <database_name> <dump_file_path_in_minio>"
+      echo "Example: $0 keycloak_db keycloak_db/keycloak_db_20260307_120000.dump"
+      echo ""
+      echo "Available backups:"
+      mc alias set leminio $MINIO_ENDPOINT $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY --api S3v4 2>/dev/null
+      mc ls --recursive leminio/$BUCKET/
+      exit 1
+    fi
+
+    echo "=== Restoring $DB_NAME from $DUMP_FILE ==="
+
+    mc alias set leminio $MINIO_ENDPOINT $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY --api S3v4 2>/dev/null
+
+    # Download dump from MinIO
+    mc cp leminio/$BUCKET/$DUMP_FILE /tmp/restore.dump
+
+    # Drop and recreate database
+    PGPASSWORD=$POSTGRES_PASSWORD psql -h postgresql.le-cicd.svc.cluster.local -U linkedeye_admin -d postgres -c "
+      SELECT pg_terminate_backend(pg_stat_activity.pid)
+      FROM pg_stat_activity WHERE datname = '$DB_NAME';
+    " 2>/dev/null || true
+
+    PGPASSWORD=$POSTGRES_PASSWORD dropdb -h postgresql.le-cicd.svc.cluster.local -U linkedeye_admin $DB_NAME 2>/dev/null || true
+    PGPASSWORD=$POSTGRES_PASSWORD createdb -h postgresql.le-cicd.svc.cluster.local -U linkedeye_admin $DB_NAME
+
+    # Restore
+    PGPASSWORD=$POSTGRES_PASSWORD pg_restore \
+      -h postgresql.le-cicd.svc.cluster.local \
+      -U linkedeye_admin \
+      -d $DB_NAME \
+      /tmp/restore.dump
+
+    rm /tmp/restore.dump
+    echo "=== Restore Complete ==="
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgresql-backup
+  namespace: le-cicd
+  labels:
+    app: postgresql-backup
+    project: linkedeye
+spec:
+  schedule: "0 2 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: postgres:16-alpine
+              command: ["/bin/bash", "/scripts/backup.sh"]
+              env:
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgresql-secret
+                      key: POSTGRES_PASSWORD
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-minio-secret
+                      key: AWS_ACCESS_KEY_ID
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-minio-secret
+                      key: AWS_SECRET_ACCESS_KEY
+              volumeMounts:
+                - name: backup-scripts
+                  mountPath: /scripts
+          volumes:
+            - name: backup-scripts
+              configMap:
+                name: backup-script
+                defaultMode: 0755
+          restartPolicy: OnFailure

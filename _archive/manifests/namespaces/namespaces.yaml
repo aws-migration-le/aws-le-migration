@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: le-cicd
+  labels:
+    project: linkedeye
+    purpose: ci-cd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: le-security
+  labels:
+    project: linkedeye
+    purpose: security
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: le-monitoring
+  labels:
+    project: linkedeye
+    purpose: monitoring
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ingress-nginx
+  labels:
+    project: linkedeye
+    purpose: ingress

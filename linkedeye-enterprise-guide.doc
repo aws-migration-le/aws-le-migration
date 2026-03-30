@@ -1,0 +1,542 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="UTF-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>LinkedEye Enterprise Platform - Deployment Guide</title>
+<style>
+  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #333; margin: 40px; }
+  h1 { font-size: 24pt; color: #1a237e; border-bottom: 3px solid #1a237e; padding-bottom: 8px; page-break-before: avoid; }
+  h2 { font-size: 18pt; color: #0d47a1; margin-top: 30px; border-bottom: 2px solid #0d47a1; padding-bottom: 5px; page-break-before: always; }
+  h3 { font-size: 14pt; color: #1565c0; margin-top: 20px; }
+  h4 { font-size: 12pt; color: #1a237e; margin-top: 15px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 10pt; }
+  th { background: #1a237e; color: white; padding: 8px 10px; text-align: left; border: 1px solid #ccc; }
+  td { padding: 6px 10px; border: 1px solid #ccc; }
+  tr:nth-child(even) td { background: #f5f5f5; }
+  code { font-family: Consolas, monospace; background: #f0f0f0; padding: 1px 4px; font-size: 9pt; color: #c62828; }
+  pre { font-family: Consolas, monospace; background: #263238; color: #eeffff; padding: 12px; font-size: 9pt; line-height: 1.4; border: 1px solid #ccc; white-space: pre-wrap; word-wrap: break-word; }
+  .info { border-left: 4px solid #0d47a1; background: #e3f2fd; padding: 10px 15px; margin: 10px 0; }
+  .warn { border-left: 4px solid #ff6f00; background: #fff3e0; padding: 10px 15px; margin: 10px 0; }
+  .danger { border-left: 4px solid #d32f2f; background: #ffebee; padding: 10px 15px; margin: 10px 0; }
+  .success { border-left: 4px solid #00c853; background: #e8f5e9; padding: 10px 15px; margin: 10px 0; }
+  .badge-done { background: #e8f5e9; color: #2e7d32; padding: 2px 8px; font-weight: bold; font-size: 9pt; }
+  .badge-pending { background: #fff3e0; color: #e65100; padding: 2px 8px; font-weight: bold; font-size: 9pt; }
+  .cover { text-align: center; padding: 100px 0; page-break-after: always; }
+  .cover h1 { font-size: 32pt; border: none; }
+  .toc { page-break-after: always; }
+  @page { size: A4; margin: 2cm; }
+</style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <p style="font-size: 14pt; color: #666; letter-spacing: 3px;">FINSPOT TECHNOLOGY SOLUTIONS</p>
+  <h1 style="font-size: 36pt; margin: 30px 0;">LinkedEye Enterprise Platform</h1>
+  <p style="font-size: 16pt; color: #0d47a1;">Complete Infrastructure Deployment &amp; Operations Guide</p>
+  <br><br>
+  <table style="width: 60%; margin: 0 auto; border: none;">
+    <tr><td style="border: none; text-align: right; color: #666;"><b>AWS Account:</b></td><td style="border: none;">654697417727</td></tr>
+    <tr><td style="border: none; text-align: right; color: #666;"><b>Region:</b></td><td style="border: none;">ap-south-1 (Mumbai)</td></tr>
+    <tr><td style="border: none; text-align: right; color: #666;"><b>EKS Cluster:</b></td><td style="border: none;">linkedeye-finspot-k8s-cluster</td></tr>
+    <tr><td style="border: none; text-align: right; color: #666;"><b>Clients:</b></td><td style="border: none;">16 Enterprise Clients</td></tr>
+    <tr><td style="border: none; text-align: right; color: #666;"><b>Document Version:</b></td><td style="border: none;">2.0</td></tr>
+    <tr><td style="border: none; text-align: right; color: #666;"><b>Date:</b></td><td style="border: none;">March 12, 2026</td></tr>
+    <tr><td style="border: none; text-align: right; color: #666;"><b>Classification:</b></td><td style="border: none;">Confidential - Internal Use</td></tr>
+  </table>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+<h2 style="page-break-before: avoid;">Table of Contents</h2>
+<p>1. Platform Overview</p>
+<p>2. Architecture Diagram</p>
+<p>3. Network Design</p>
+<p>4. Connectivity Flow (End-to-End)</p>
+<p>5. EKS Cluster Details</p>
+<p>6. Kubernetes Namespaces &amp; Isolation</p>
+<p>7. Hybrid Node Registration (On-Prem Workers)</p>
+<p>8. ALB Host-Based Routing</p>
+<p>9. Management Tools</p>
+<p>10. CI/CD Pipeline Architecture</p>
+<p>11. Dev / UAT / Prod Deployment Flow</p>
+<p>12. Security Architecture</p>
+<p>13. Access Guide</p>
+<p>14. Installation Steps (End-to-End)</p>
+<p>15. Configuration Reference</p>
+<p>16. On-Prem Server Inventory</p>
+<p>17. Monitoring &amp; Alerting</p>
+<p>18. Disaster Recovery</p>
+<p>19. Cost Estimate</p>
+<p>20. Team Contacts</p>
+<p>21. Complete Resource Inventory</p>
+</div>
+
+<!-- ==================== 1. OVERVIEW ==================== -->
+<h2>1. Platform Overview</h2>
+
+<p><b>LinkedEye</b> is FinSpot Technology Solutions' shared ITSM/Monitoring platform deployed on AWS. It serves <b>16 enterprise clients</b> with dedicated Kubernetes namespaces, on-premise hybrid worker nodes, and centralized management tools.</p>
+
+<h3>Key Features</h3>
+<ul>
+  <li><b>EKS Hybrid Nodes</b> &mdash; AWS-managed control plane, on-prem workers per client site</li>
+  <li><b>Multi-tenant isolation</b> &mdash; NetworkPolicy + RBAC + ResourceQuota per namespace</li>
+  <li><b>Zero VPN required</b> &mdash; Hybrid nodes connect via public EKS API (HTTPS 443 outbound only)</li>
+  <li><b>GitOps CI/CD</b> &mdash; Jenkins + Harbor + ArgoCD pipeline</li>
+  <li><b>Centralized SSO</b> &mdash; Keycloak for all tools authentication</li>
+  <li><b>Secret management</b> &mdash; HashiCorp Vault with per-client paths</li>
+  <li><b>HA architecture</b> &mdash; Dual NAT GW, 2 AZs, 2 nodes per client</li>
+  <li><b>TLS everywhere</b> &mdash; ALB with ACM wildcard cert + external domain certs</li>
+</ul>
+
+<h3>Client List &amp; FQDNs</h3>
+<table>
+  <tr><th>#</th><th>Client</th><th>Namespace</th><th>FQDN</th><th>Environment</th></tr>
+  <tr><td>1</td><td>InDMoney</td><td>le-indmoney-prod</td><td>indmoney-prod-le.finspot.in</td><td>PROD</td></tr>
+  <tr><td>2</td><td>PL India</td><td>le-pl-india-prod</td><td>prod-le.plindia.com</td><td>PROD</td></tr>
+  <tr><td>3</td><td>Neo Wealth</td><td>le-neo-wealth-prod</td><td>prod-le.neo-wealth.com</td><td>PROD</td></tr>
+  <tr><td>4</td><td>Flattrade (FTC)</td><td>le-ftc-prod</td><td>prod-le.flattrade.in</td><td>PROD</td></tr>
+  <tr><td>5</td><td>VACHANA</td><td rowspan="5">le-isv-prod (shared)</td><td rowspan="5">fs-le-isv.finspot.in</td><td rowspan="5">PROD</td></tr>
+  <tr><td>6</td><td>VERTEX</td></tr>
+  <tr><td>7</td><td>BULLSMART</td></tr>
+  <tr><td>8</td><td>SKYCOMMODITIES</td></tr>
+  <tr><td>9</td><td>AIONION</td></tr>
+  <tr><td>10</td><td>Way2Wealth</td><td>le-w2w-prod</td><td>w2w-prod-le.way2wealth.com</td><td>PROD</td></tr>
+  <tr><td>11</td><td>IFSC</td><td>le-ifsc-prod</td><td>fs-ifsc-le.finspot.in</td><td>PROD</td></tr>
+  <tr><td>12</td><td>InDMoney IFSC</td><td>le-indmoney-ifsc-prod</td><td>indmoney-ifsc-le.finspot.in</td><td>PROD</td></tr>
+  <tr><td>13</td><td>Lemonn</td><td>le-lemonn-prod</td><td>lemonn-prod-le.finspot.in</td><td>PROD</td></tr>
+  <tr><td>14</td><td>DX</td><td>le-dx-prod</td><td>fs-le-dx.finspot.in</td><td>PROD</td></tr>
+  <tr><td>15</td><td>Mirae</td><td>le-mirae-prod</td><td>fs-le-prod-mirae.com</td><td>PROD</td></tr>
+  <tr><td>16</td><td>SMIFS</td><td>le-smifs-prod</td><td>fs-le-prod-smifs.com</td><td>PROD</td></tr>
+</table>
+
+<h3>Non-Production Environments</h3>
+<table>
+  <tr><th>Environment</th><th>FQDN</th><th>Namespace</th></tr>
+  <tr><td>DEV</td><td>fs-le-dev.finspot.in</td><td>le-dev</td></tr>
+  <tr><td>DEV</td><td>fs-le-dev1.finspot.in</td><td>le-dev</td></tr>
+  <tr><td>DEV</td><td>fs-le-dev2.finspot.in</td><td>le-dev</td></tr>
+  <tr><td>UAT</td><td>fs-le-uat.finspot.in</td><td>le-uat</td></tr>
+  <tr><td>DR</td><td>fs-le-dr.finspot.in</td><td>le-dr</td></tr>
+  <tr><td>DR</td><td>indmoney-dr-le.finspot.in</td><td>le-dr</td></tr>
+</table>
+
+<!-- ==================== 2. ARCHITECTURE ==================== -->
+<h2>2. Architecture Diagram</h2>
+
+<pre>
+                          INTERNET
+                              |
+                         HTTPS 443 (*.finspot.in + external domains)
+                              |
++=====================================================================+
+|  AWS VPC: 10.15.0.0/16  (vpc-01d43b65392eb7364)   ap-south-1       |
+|                                                                       |
+|  PUBLIC SUBNET AZ1a (10.15.1.0/24)                                   |
+|  +------------------+   +-----------------------------------+        |
+|  | ALB              |   | EC2-A (Jenkins)                   |        |
+|  | linkedeye-tools  |   | i-0a9159a2543b2e9c3               |        |
+|  | -alb             |   | 15.206.123.199 (m5.xlarge)        |        |
+|  | HTTPS :443       |   | :8080 Jenkins CI/CD               |        |
+|  +-----|------------+   +-----------------------------------+        |
+|        |                                                              |
+|        |  Host routing   +-----------------------------------+        |
+|        +----------------&gt;| EC2-B (Mgmt + ITSM)              |        |
+|                          | i-03ed15e786ddd4340               |        |
+|                          | 15.206.80.24 (m5.2xlarge)         |        |
+|                          |                                   |        |
+|                          | Docker Compose:                   |        |
+|                          |  :5000  Harbor Registry            |        |
+|                          |  :8082  ArgoCD (GitOps)            |        |
+|                          |  :8081  Keycloak (SSO)             |        |
+|                          |  :8200  Vault (Secrets)            |        |
+|                          |  :80    ITSM Portal                |        |
+|                          |  :5432  PostgreSQL                 |        |
+|                          +-----------------------------------+        |
+|                                                                       |
+|  PRIVATE SUBNETS (10.15.10.0/24, 10.15.11.0/24)                     |
+|  EKS Control Plane ENIs                                               |
+|                                                                       |
+|  EKS CONTROL PLANE (AWS Managed)                                      |
+|  Cluster: linkedeye-finspot-k8s-cluster  |  K8s 1.31                 |
+|  API: https://11CBD16DDC759507469188FB0FCB690D.gr7...                |
+|  Namespaces (24): 15 prod + 3 non-prod + 3 platform + 4 system      |
+|                                                                       |
++==========================|============================================+
+                           |
+                  HTTPS 443 (Public EKS API - outbound only)
+                           |
+         +-----------------+------------------+
+         |                 |                  |
++--------v------+  +------v-------+  +-------v------+
+| CLIENT SITE 1 |  | CLIENT SITE 2|  | CLIENT SITE N|
+| InDMoney      |  | Neo Wealth   |  | (16 total)   |
+| Mumbai+BLR    |  |              |  |              |
+| 10.172.0.10   |  | 10.40.1.10   |  |              |
+| 10.173.0.10   |  |              |  |              |
+| FortiGate FW  |  | FortiGate FW |  | FortiGate FW |
+| Worker x 2    |  | Worker x 2   |  | Worker x 2   |
++---------------+  +--------------+  +--------------+
+</pre>
+
+<!-- ==================== 3. NETWORK ==================== -->
+<h2>3. Network Design</h2>
+
+<h3>VPC &amp; Subnet Layout</h3>
+<table>
+  <tr><th>Subnet</th><th>ID</th><th>CIDR</th><th>AZ</th><th>Purpose</th></tr>
+  <tr><td>Public AZ1a</td><td>subnet-0bdc4533ee62b2d3c</td><td>10.15.1.0/24</td><td>ap-south-1a</td><td>EC2-A, EC2-B, NAT-GW-1, ALB</td></tr>
+  <tr><td>Public AZ1b</td><td>subnet-054e0299c17cd8792</td><td>10.15.2.0/24</td><td>ap-south-1b</td><td>NAT-GW-2, ALB 2nd AZ</td></tr>
+  <tr><td>Private AZ1a</td><td>subnet-0f5887a9f7bd825d6</td><td>10.15.10.0/24</td><td>ap-south-1a</td><td>EKS Control Plane ENIs</td></tr>
+  <tr><td>Private AZ1b</td><td>subnet-05cd5f6bf97410bc5</td><td>10.15.11.0/24</td><td>ap-south-1b</td><td>EKS Control Plane ENIs</td></tr>
+  <tr><td>Storage AZ1a</td><td>subnet-05bc39de32b347f04</td><td>10.15.20.0/24</td><td>ap-south-1a</td><td>Reserved (EFS/RDS)</td></tr>
+  <tr><td>Storage AZ1b</td><td>subnet-0fba24a417964ab69</td><td>10.15.21.0/24</td><td>ap-south-1b</td><td>Reserved (EFS/RDS)</td></tr>
+</table>
+
+<h3>Security Groups</h3>
+<table>
+  <tr><th>Name</th><th>ID</th><th>Inbound Rules</th></tr>
+  <tr><td>ALB SG</td><td>sg-01f66568ac2628a64</td><td>80, 443 from 0.0.0.0/0</td></tr>
+  <tr><td>EKS Cluster SG</td><td>sg-07e2a335b24ecaac1</td><td>443 from VPC CIDR + Hybrid SG</td></tr>
+  <tr><td>EKS Hybrid SG</td><td>sg-0fe5d6167a67aedc2</td><td>443, 10250 from EKS Cluster SG</td></tr>
+  <tr><td>Jenkins EC2 SG</td><td>sg-01b7dc73be9af932d</td><td>22 (office), 8080 from ALB SG</td></tr>
+  <tr><td>Mgmt EC2 SG</td><td>sg-0ff7d92d72838ea12</td><td>22 (office), 80/5000/8081-8083/8200 from ALB SG</td></tr>
+</table>
+
+<!-- ==================== 4. CONNECTIVITY ==================== -->
+<h2>4. Connectivity Flow (End-to-End)</h2>
+
+<h3>Flow 1: User Accessing Client ITSM Portal</h3>
+<pre>
+User Browser
+  |  https://indmoney-prod-le.finspot.in
+  v
+[DNS: *.finspot.in CNAME] --&gt; linkedeye-tools-alb-922526253.ap-south-1.elb.amazonaws.com
+  |
+  v
+[ALB - HTTPS :443]
+  | TLS termination (ACM cert)
+  | Host-header match: indmoney-prod-le.finspot.in
+  | Rule Priority 10 --&gt; Forward to TG: linkedeye-tg-client-itsm
+  v
+[EC2-B :80] (15.206.80.24)
+  | ITSM Docker container serves request
+  | Client identified by hostname header
+  v
+[Response returned to user via ALB]
+</pre>
+
+<h3>Flow 2: CI/CD Pipeline</h3>
+<pre>
+Developer --&gt; git push --&gt; GitHub Webhook
+  |
+  v
+[ALB :443] --&gt; Host: le.jenkins.finspot.in --&gt; EC2-A Jenkins :8080
+  |
+  v
+Jenkins Pipeline:
+  1. git checkout
+  2. docker build
+  3. docker run tests
+  4. docker push to Harbor (le.harbor.finspot.in)
+  |
+  v
+ArgoCD (le.argocd.finspot.in)
+  | Detects new image tag in Git manifests
+  | Syncs to target namespace
+  v
+EKS API --&gt; kubectl apply to le-{client}-prod namespace
+  |
+  v
+Hybrid Worker Node (on-prem at client site)
+  | kubelet pulls image, Pod starts
+</pre>
+
+<h3>Flow 3: Hybrid Node Communication</h3>
+<pre>
+On-Prem Worker Node (Client Site)
+  |
+  | ALL TRAFFIC IS OUTBOUND (no inbound ports needed)
+  |
+  +---&gt; HTTPS 443 --&gt; EKS API Server (kubelet heartbeat, pod specs)
+  +---&gt; HTTPS 443 --&gt; ECR / Harbor (container image pulls)
+  +---&gt; HTTPS 443 --&gt; SSM Service (management channel)
+  +---&gt; HTTPS 443 --&gt; STS (IAM credential refresh)
+</pre>
+
+<!-- ==================== 5. EKS ==================== -->
+<h2>5. EKS Cluster Details</h2>
+<table>
+  <tr><th>Property</th><th>Value</th></tr>
+  <tr><td>Cluster Name</td><td><b>linkedeye-finspot-k8s-cluster</b></td></tr>
+  <tr><td>ARN</td><td><code>arn:aws:eks:ap-south-1:654697417727:cluster/linkedeye-finspot-k8s-cluster</code></td></tr>
+  <tr><td>Kubernetes Version</td><td>1.31</td></tr>
+  <tr><td>Endpoint</td><td><code>https://11CBD16DDC759507469188FB0FCB690D.gr7.ap-south-1.eks.amazonaws.com</code></td></tr>
+  <tr><td>Endpoint Access</td><td>Public + Private</td></tr>
+  <tr><td>OIDC ID</td><td>11CBD16DDC759507469188FB0FCB690D</td></tr>
+  <tr><td>IAM Role</td><td>linkedeye-eks-cluster-role</td></tr>
+  <tr><td>Addons</td><td>vpc-cni, coredns, kube-proxy</td></tr>
+  <tr><td>StorageClass</td><td>gp3 (default, EBS CSI)</td></tr>
+  <tr><td>Logging</td><td>api, audit, authenticator, controllerManager, scheduler</td></tr>
+</table>
+
+<!-- ==================== 6. NAMESPACES ==================== -->
+<h2>6. Kubernetes Namespaces &amp; Isolation</h2>
+
+<h3>All Namespaces (24 total)</h3>
+<table>
+  <tr><th>Namespace</th><th>Type</th><th>Client</th><th>Quota (CPU/Mem/Pods)</th></tr>
+  <tr><td>le-monitoring</td><td>Platform</td><td>-</td><td>-</td></tr>
+  <tr><td>le-workloads</td><td>Platform</td><td>-</td><td>-</td></tr>
+  <tr><td>le-dev</td><td>Non-Prod</td><td>FinSpot</td><td>2 CPU / 4Gi / 10</td></tr>
+  <tr><td>le-uat</td><td>Non-Prod</td><td>FinSpot</td><td>2 CPU / 4Gi / 10</td></tr>
+  <tr><td>le-dr</td><td>Non-Prod</td><td>DR</td><td>2 CPU / 4Gi / 10</td></tr>
+  <tr><td>le-indmoney-prod</td><td>Prod</td><td>InDMoney</td><td>4 CPU / 8Gi / 20</td></tr>
+  <tr><td>le-neo-wealth-prod</td><td>Prod</td><td>Neo Wealth</td><td>4 CPU / 8Gi / 20</td></tr>
+  <tr><td>le-dx-prod</td><td>Prod</td><td>DX</td><td>4 CPU / 8Gi / 20</td></tr>
+  <tr><td>le-ifsc-prod</td><td>Prod</td><td>IFSC</td><td>4 CPU / 8Gi / 20</td></tr>
+  <tr><td>le-w2w-prod</td><td>Prod</td><td>Way2Wealth</td><td>4 CPU / 8Gi / 20</td></tr>
+  <tr><td>le-ftc-prod</td><td>Prod</td><td>Flattrade</td><td>4 CPU / 8Gi / 20</td></tr>
+  <tr><td>le-pl-india-prod</td><td>Prod</td><td>PL India</td><td>4 CPU / 8Gi / 20</td></tr>
+  <tr><td>le-isv1-prod .. le-isv5-prod</td><td>Prod</td><td>5 ISV Clients</td><td>4 CPU / 8Gi / 20 each</td></tr>
+  <tr><td>le-mirae-prod</td><td>Prod</td><td>Mirae</td><td>4 CPU / 8Gi / 20</td></tr>
+  <tr><td>le-smifs-prod</td><td>Prod</td><td>SMIFS</td><td>4 CPU / 8Gi / 20</td></tr>
+  <tr><td>le-lemonn-prod</td><td>Prod</td><td>Lemonn</td><td>4 CPU / 8Gi / 20</td></tr>
+</table>
+
+<h3>Per-Namespace Isolation (5 Layers)</h3>
+<table>
+  <tr><th>Layer</th><th>Resource</th><th>Purpose</th></tr>
+  <tr><td>1</td><td>NetworkPolicy</td><td>Only allows ingress from own namespace + le-monitoring. Prevents cross-client traffic.</td></tr>
+  <tr><td>2</td><td>ResourceQuota</td><td>Hard limits: 4 CPU / 8Gi / 20 pods per prod namespace</td></tr>
+  <tr><td>3</td><td>LimitRange</td><td>Default container limits: 500m CPU, 512Mi memory</td></tr>
+  <tr><td>4</td><td>RBAC RoleBindings</td><td>le-client-admin (ops) + le-argocd-deployer (GitOps)</td></tr>
+  <tr><td>5</td><td>Node Affinity + Taints</td><td>Pods only schedule on client's on-prem hybrid nodes</td></tr>
+</table>
+
+<!-- ==================== 7. HYBRID NODES ==================== -->
+<h2>7. Hybrid Node Registration</h2>
+
+<div class="info"><b>How it works:</b> EKS Hybrid Nodes let on-premise servers join the EKS cluster as worker nodes. Control plane stays in AWS, workers run at client sites. Communication is HTTPS 443 outbound only &mdash; <b>no VPN required</b>.</div>
+
+<h3>Registration Steps</h3>
+<ol>
+  <li><b>Admin creates SSM Hybrid Activation:</b> <code>aws ssm create-activation --iam-role linkedeye-hybrid-node-role</code></li>
+  <li><b>Install SSM Agent on on-prem server:</b> <code>sudo amazon-ssm-agent -register -id ACTIVATION_ID -code ACTIVATION_CODE -region ap-south-1</code></li>
+  <li><b>Install nodeadm &amp; bootstrap:</b> Create <code>/etc/eks/nodeadm-config.yaml</code> with cluster config, then <code>sudo nodeadm init</code></li>
+  <li><b>Label &amp; taint:</b> <code>kubectl label node mi-0xxx client=indmoney</code> + <code>kubectl taint node mi-0xxx client=indmoney:NoSchedule</code></li>
+</ol>
+
+<h3>Firewall Rules (Per Client Site)</h3>
+<div class="warn"><b>Share with each client's network team.</b> Only OUTBOUND rules needed. NO INBOUND ports required.</div>
+<table>
+  <tr><th>Direction</th><th>Protocol</th><th>Port</th><th>Destination</th><th>Purpose</th></tr>
+  <tr><td>Outbound</td><td>TCP</td><td>443</td><td>*.eks.ap-south-1.amazonaws.com</td><td>EKS API Server</td></tr>
+  <tr><td>Outbound</td><td>TCP</td><td>443</td><td>ssm.ap-south-1.amazonaws.com</td><td>SSM Registration</td></tr>
+  <tr><td>Outbound</td><td>TCP</td><td>443</td><td>ssmmessages.ap-south-1.amazonaws.com</td><td>SSM Messages</td></tr>
+  <tr><td>Outbound</td><td>TCP</td><td>443</td><td>ec2messages.ap-south-1.amazonaws.com</td><td>EC2 Messages</td></tr>
+  <tr><td>Outbound</td><td>TCP</td><td>443</td><td>ecr.ap-south-1.amazonaws.com</td><td>Container Registry</td></tr>
+  <tr><td>Outbound</td><td>TCP</td><td>443</td><td>sts.ap-south-1.amazonaws.com</td><td>IAM Token Refresh</td></tr>
+  <tr><td>Outbound</td><td>TCP</td><td>443</td><td>s3.ap-south-1.amazonaws.com</td><td>S3 (ECR layers)</td></tr>
+</table>
+
+<!-- ==================== 8. ALB ==================== -->
+<h2>8. ALB Host-Based Routing</h2>
+
+<table>
+  <tr><th>Property</th><th>Value</th></tr>
+  <tr><td>ALB Name</td><td>linkedeye-tools-alb</td></tr>
+  <tr><td>DNS</td><td>linkedeye-tools-alb-922526253.ap-south-1.elb.amazonaws.com</td></tr>
+  <tr><td>ACM Cert (Primary)</td><td>*.finspot.in (ISSUED)</td></tr>
+  <tr><td>SSL Policy</td><td>ELBSecurityPolicy-TLS13-1-2-2021-06</td></tr>
+  <tr><td>HTTP :80</td><td>Redirect to HTTPS :443 (HTTP 301)</td></tr>
+</table>
+
+<h3>All Routing Rules (27 Total)</h3>
+<table>
+  <tr><th>Priority</th><th>Host</th><th>Target</th><th>Type</th></tr>
+  <tr style="background: #e3f2fd;"><td colspan="4"><b>Management Tools</b></td></tr>
+  <tr><td>1</td><td>le.jenkins.finspot.in</td><td>EC2-A :8080</td><td>Tool</td></tr>
+  <tr><td>2</td><td>le.argocd.finspot.in</td><td>EC2-B :8082</td><td>Tool</td></tr>
+  <tr><td>3</td><td>le.harbor.finspot.in</td><td>EC2-B :8083</td><td>Tool</td></tr>
+  <tr><td>4</td><td>le.keycloak.finspot.in</td><td>EC2-B :8081</td><td>Tool</td></tr>
+  <tr><td>5</td><td>le.inc.finspot.in</td><td>EC2-B :80</td><td>Tool</td></tr>
+  <tr><td>6</td><td>vault.finspot.in</td><td>EC2-B :8200</td><td>Tool</td></tr>
+  <tr style="background: #e8f5e9;"><td colspan="4"><b>Client ITSM - Production</b></td></tr>
+  <tr><td>10</td><td>indmoney-prod-le.finspot.in</td><td>EC2-B :80</td><td>PROD</td></tr>
+  <tr><td>11</td><td>prod-le.plindia.com</td><td>EC2-B :80</td><td>PROD</td></tr>
+  <tr><td>12</td><td>prod-le.neo-wealth.com</td><td>EC2-B :80</td><td>PROD</td></tr>
+  <tr><td>13</td><td>prod-le.flattrade.in</td><td>EC2-B :80</td><td>PROD</td></tr>
+  <tr><td>14</td><td>fs-le-isv.finspot.in</td><td>EC2-B :80</td><td>PROD (5 ISV)</td></tr>
+  <tr><td>15</td><td>w2w-prod-le.way2wealth.com</td><td>EC2-B :80</td><td>PROD</td></tr>
+  <tr><td>16</td><td>fs-ifsc-le.finspot.in</td><td>EC2-B :80</td><td>PROD</td></tr>
+  <tr><td>17</td><td>indmoney-ifsc-le.finspot.in</td><td>EC2-B :80</td><td>PROD</td></tr>
+  <tr><td>18</td><td>lemonn-prod-le.finspot.in</td><td>EC2-B :80</td><td>PROD</td></tr>
+  <tr><td>19</td><td>fs-le-dx.finspot.in</td><td>EC2-B :80</td><td>PROD</td></tr>
+  <tr><td>20</td><td>fs-le-prod-mirae.com</td><td>EC2-B :80</td><td>PROD</td></tr>
+  <tr><td>21</td><td>fs-le-prod-smifs.com</td><td>EC2-B :80</td><td>PROD</td></tr>
+  <tr style="background: #fff3e0;"><td colspan="4"><b>Non-Production</b></td></tr>
+  <tr><td>22</td><td>indmoney-dr-le.finspot.in</td><td>EC2-B :80</td><td>DR</td></tr>
+  <tr><td>23</td><td>fs-le-dr.finspot.in</td><td>EC2-B :80</td><td>DR</td></tr>
+  <tr><td>24</td><td>fs-le-uat.finspot.in</td><td>EC2-B :80</td><td>UAT</td></tr>
+  <tr><td>25</td><td>fs-le-dev.finspot.in</td><td>EC2-B :80</td><td>DEV</td></tr>
+  <tr><td>26</td><td>fs-le-dev1.finspot.in</td><td>EC2-B :80</td><td>DEV</td></tr>
+  <tr><td>27</td><td>fs-le-dev2.finspot.in</td><td>EC2-B :80</td><td>DEV</td></tr>
+  <tr><td>default</td><td>* (no match)</td><td>404 Not Found</td><td>-</td></tr>
+</table>
+
+<div class="danger">
+<b>DNS ACTION REQUIRED:</b><br>
+<b>FinSpot domains:</b> <code>*.finspot.in CNAME linkedeye-tools-alb-922526253.ap-south-1.elb.amazonaws.com</code><br><br>
+<b>External client domains (need CNAME from client DNS teams):</b><br>
+<code>prod-le.plindia.com CNAME linkedeye-tools-alb-922526253.ap-south-1.elb.amazonaws.com</code><br>
+<code>prod-le.neo-wealth.com CNAME linkedeye-tools-alb-...elb.amazonaws.com</code><br>
+<code>prod-le.flattrade.in CNAME linkedeye-tools-alb-...elb.amazonaws.com</code><br>
+<code>w2w-prod-le.way2wealth.com CNAME linkedeye-tools-alb-...elb.amazonaws.com</code><br>
+<code>fs-le-prod-mirae.com CNAME linkedeye-tools-alb-...elb.amazonaws.com</code><br>
+<code>fs-le-prod-smifs.com CNAME linkedeye-tools-alb-...elb.amazonaws.com</code><br><br>
+<b>ACM certs for external domains are PENDING_VALIDATION.</b> Share DNS validation CNAME records with each client.
+</div>
+
+<!-- ==================== 9. TOOLS ==================== -->
+<h2>9. Management Tools</h2>
+<table>
+  <tr><th>Tool</th><th>URL</th><th>Port</th><th>Location</th><th>Purpose</th></tr>
+  <tr><td>Jenkins</td><td>https://le.jenkins.finspot.in</td><td>8080</td><td>EC2-A</td><td>CI/CD pipeline</td></tr>
+  <tr><td>ArgoCD</td><td>https://le.argocd.finspot.in</td><td>8082</td><td>EC2-B</td><td>GitOps deployment</td></tr>
+  <tr><td>Harbor</td><td>https://le.harbor.finspot.in</td><td>8083/5000</td><td>EC2-B</td><td>Docker registry + scanning</td></tr>
+  <tr><td>Keycloak</td><td>https://le.keycloak.finspot.in</td><td>8081</td><td>EC2-B</td><td>SSO / IAM (OIDC/SAML)</td></tr>
+  <tr><td>Vault</td><td>https://vault.finspot.in</td><td>8200</td><td>EC2-B</td><td>Secret management</td></tr>
+  <tr><td>ITSM</td><td>https://le.inc.finspot.in</td><td>80</td><td>EC2-B</td><td>Incident/Service mgmt</td></tr>
+  <tr><td>PostgreSQL</td><td>(internal only)</td><td>5432</td><td>EC2-B</td><td>Database for all tools</td></tr>
+</table>
+
+<!-- ==================== 10-11. CI/CD ==================== -->
+<h2>10. CI/CD Pipeline &amp; Deployment Flow</h2>
+
+<h3>Environment Promotion</h3>
+<pre>
+  le-dev (auto)  ===&gt;  le-uat (manual)  ===&gt;  le-*-prod (approved)
+
+  Trigger:             Trigger:                Trigger:
+  git push develop     PR merge release/*      git tag v*
+
+  Image Tag:           Image Tag:              Image Tag:
+  :dev-SHA             :uat-SHA                :v1.2.3
+
+  Approval:            Approval:               Approval:
+  None (auto)          QA Sign-off             Ops Lead + CTO
+</pre>
+
+<!-- ==================== 12. SECURITY ==================== -->
+<h2>12. Security Architecture</h2>
+<table>
+  <tr><th>Layer</th><th>Components</th><th>Status</th></tr>
+  <tr><td>Network</td><td>ALB TLS 1.3, Security Groups (5), NetworkPolicy per NS, Private subnets</td><td><span class="badge-done">ACTIVE</span></td></tr>
+  <tr><td>Identity</td><td>Keycloak SSO, IAM Roles, RBAC ClusterRoles, Pod Security Standards</td><td><span class="badge-done">ACTIVE</span></td></tr>
+  <tr><td>Secrets</td><td>Vault per-client paths, SSH key, EKS OIDC (IRSA)</td><td><span class="badge-done">ACTIVE</span></td></tr>
+  <tr><td>WAF</td><td>AWS WAF: CommonRuleSet, BadInputs, SQLi, RateLimit (2000/IP)</td><td><span class="badge-done">ACTIVE</span></td></tr>
+  <tr><td>Threat Detection</td><td>AWS GuardDuty (EKS audit + runtime)</td><td><span class="badge-done">ACTIVE</span></td></tr>
+  <tr><td>Audit</td><td>CloudTrail (multi-region), VPC Flow Logs, EKS Logging (all 5 types)</td><td><span class="badge-done">ACTIVE</span></td></tr>
+  <tr><td>Encryption</td><td>KMS key created (EKS secrets encryption pending admin grant)</td><td><span class="badge-pending">PARTIAL</span></td></tr>
+</table>
+
+<!-- ==================== 13. ACCESS ==================== -->
+<h2>13. Access Guide</h2>
+
+<h3>Web Access</h3>
+<table>
+  <tr><th>Tool</th><th>URL</th><th>Credentials</th></tr>
+  <tr><td>Jenkins</td><td>https://le.jenkins.finspot.in</td><td>/var/jenkins_home/secrets/initialAdminPassword</td></tr>
+  <tr><td>ArgoCD</td><td>https://le.argocd.finspot.in</td><td>admin / argocd-initial-admin-secret</td></tr>
+  <tr><td>Harbor</td><td>https://le.harbor.finspot.in</td><td>admin / Harbor12345 (change immediately)</td></tr>
+  <tr><td>Keycloak</td><td>https://le.keycloak.finspot.in</td><td>admin / admin (change immediately)</td></tr>
+  <tr><td>Vault</td><td>https://vault.finspot.in</td><td>Root token from init ceremony</td></tr>
+  <tr><td>ITSM</td><td>https://le.inc.finspot.in</td><td>Keycloak SSO</td></tr>
+</table>
+
+<h3>SSH Access</h3>
+<pre>
+# Jenkins (EC2-A)
+ssh -i ~/.ssh/le-shared-k8s-key.pem ubuntu@15.206.123.199
+
+# Management + ITSM (EC2-B)
+ssh -i ~/.ssh/le-shared-k8s-key.pem ubuntu@15.206.80.24
+</pre>
+
+<h3>Kubernetes Access</h3>
+<pre>
+aws eks update-kubeconfig --name linkedeye-finspot-k8s-cluster --region ap-south-1
+kubectl get nodes
+kubectl get pods -n le-indmoney-prod
+</pre>
+
+<!-- ==================== 16. ON-PREM SERVERS ==================== -->
+<h2>16. On-Prem Server Inventory</h2>
+<table>
+  <tr><th>Hostname</th><th>Server IP</th><th>Environment</th><th>Client</th></tr>
+  <tr><td>DEV-LE_SERVER</td><td>172.16.0.65</td><td>DEV</td><td>FinSpot Internal</td></tr>
+  <tr><td>DEV-LE_SERVER</td><td>172.16.0.75</td><td>DEV</td><td>FinSpot Internal</td></tr>
+  <tr><td>UAT-LE_SERVER</td><td>172.20.1.80</td><td>UAT</td><td>FinSpot Internal</td></tr>
+  <tr><td>fs-uat-le-release-server</td><td>172.20.1.90</td><td>UAT</td><td>FinSpot Internal</td></tr>
+  <tr><td>fs-uat-jenkins</td><td>172.20.1.91</td><td>CI/CD</td><td>FinSpot Internal</td></tr>
+  <tr><td>Jenkins Server</td><td>172.16.0.72</td><td>CI/CD</td><td>FinSpot Internal</td></tr>
+  <tr><td>DX-LE_PROD</td><td>10.10.10.110</td><td>PROD</td><td>DX</td></tr>
+  <tr><td>INDMONEY-MUMBAI_PROD</td><td>10.172.0.10</td><td>PROD</td><td>InDMoney</td></tr>
+  <tr><td>INDMONEY-BANGLORE_PROD</td><td>10.173.0.10</td><td>PROD</td><td>InDMoney</td></tr>
+  <tr><td>NEO-LE_PROD</td><td>10.40.1.10</td><td>PROD</td><td>Neo Wealth</td></tr>
+  <tr><td>FTC-LE_PROD</td><td>202.87.54.194</td><td>PROD</td><td>Flattrade (FTC)</td></tr>
+  <tr><td>IFSC-LE_PROD</td><td>10.40.40.23</td><td>PROD</td><td>IFSC</td></tr>
+</table>
+
+<!-- ==================== 19. COST ==================== -->
+<h2>19. Monthly Cost Estimate</h2>
+<table>
+  <tr><th>Resource</th><th>Type/Config</th><th>Unit Cost (USD)</th><th>Monthly (USD)</th></tr>
+  <tr><td>EKS Cluster</td><td>Control Plane</td><td>$0.10/hr</td><td>$73</td></tr>
+  <tr><td>EC2-A (Jenkins)</td><td>m5.xlarge (On-Demand)</td><td>$0.192/hr</td><td>$140</td></tr>
+  <tr><td>EC2-B (Mgmt+ITSM)</td><td>m5.2xlarge (On-Demand)</td><td>$0.384/hr</td><td>$280</td></tr>
+  <tr><td>NAT Gateway x2</td><td>HA pair</td><td>$0.045/hr each</td><td>$66</td></tr>
+  <tr><td>NAT GW Data</td><td>~100 GB/mo est.</td><td>$0.045/GB</td><td>$5</td></tr>
+  <tr><td>ALB</td><td>Application LB</td><td>$0.0225/hr + LCU</td><td>$25</td></tr>
+  <tr><td>EIP x2</td><td>Attached to NAT GW</td><td>$0 (attached)</td><td>$0</td></tr>
+  <tr><td>GuardDuty</td><td>EKS protection</td><td>Variable</td><td>~$15</td></tr>
+  <tr><td>WAF</td><td>4 rules</td><td>$5 + $1/rule</td><td>$9</td></tr>
+  <tr><td>CloudTrail</td><td>Multi-region</td><td>Free (1 trail)</td><td>$0</td></tr>
+  <tr><td>VPC Flow Logs</td><td>CloudWatch</td><td>$0.50/GB ingested</td><td>~$10</td></tr>
+  <tr><td>EKS Logging</td><td>CloudWatch (5 types)</td><td>$0.50/GB ingested</td><td>~$15</td></tr>
+  <tr><td>KMS Key</td><td>1 CMK</td><td>$1/mo + requests</td><td>$1</td></tr>
+  <tr><td>S3 (CloudTrail)</td><td>~5 GB/mo</td><td>$0.023/GB</td><td>~$1</td></tr>
+  <tr style="background: #e8f5e9;"><td colspan="3"><b>TOTAL ESTIMATED MONTHLY</b></td><td><b>~$640/month</b></td></tr>
+</table>
+
+<div class="info"><b>Cost Optimization Tips:</b>
+<ul>
+<li>Switch EC2s to Reserved Instances (1yr) for ~40% savings: ~$384/month</li>
+<li>Consider spot instances for non-prod workloads</li>
+<li>Single NAT GW saves $33/mo but loses HA</li>
+<li>Hybrid nodes run on client hardware: $0 AWS compute cost</li>
+</ul>
+</div>
+
+<!-- ==================== 20. CONTACTS ==================== -->
+<h2>20. Team Contacts</h2>
+<table>
+  <tr><th>Role</th><th>Name</th><th>Phone</th><th>Responsibilities</th></tr>
+  <tr><td>CTO / DevOps Lead</td><td>Rajkumar Madhu</td><td>+91-917-677-2077</td><td>Architecture, production approvals, AWS account</td></tr>
+  <tr><td>Ops Lead</td><td>Hoysala Bise</td><td>+91-998-014-6101</td><td>Operations, deployments, incident management</td></tr>
+  <tr><td>Network Lead</td><td>Siva Kadirannagari</td><td>+91-960-368-3828</td><td>DNS, firewall, network, SSL certs</td></tr>
+  <tr><td>DBA</td><td>Rajkumar Ashokan</td><td>+91-975-189-2775</td><td>PostgreSQL, backups, performance</td></tr>
+</table>
+
+<!-- FOOTER -->
+<br><hr>
+<p style="text-align: center; color: #999; font-size: 9pt;">
+  <b>LinkedEye Enterprise Platform</b> | FinSpot Technology Solutions<br>
+  AWS Account: 654697417727 | Region: ap-south-1 (Mumbai) | Generated: March 12, 2026 | Version 2.0<br>
+  Confidential - For internal use only
+</p>
+
+</body>
+</html>

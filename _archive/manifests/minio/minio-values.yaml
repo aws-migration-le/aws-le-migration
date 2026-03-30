@@ -1,0 +1,30 @@
+# MinIO Helm values for LinkedEye platform
+# Namespace: le-cicd
+# Install: helm install minio minio/minio -n le-cicd -f minio-values.yaml
+
+mode: standalone
+replicas: 1
+
+rootUser: minioadmin
+rootPassword: LinkedEye@2026
+
+persistence:
+  enabled: true
+  size: 50Gi
+  storageClass: local-path
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 1
+    memory: 1Gi
+
+service:
+  type: NodePort
+  nodePort: 30087
+
+consoleService:
+  type: NodePort
+  nodePort: 30086

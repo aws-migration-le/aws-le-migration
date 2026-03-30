@@ -1,0 +1,52 @@
+# Vault Helm values for LinkedEye platform
+# Namespace: le-security
+# Install: helm install vault hashicorp/vault -n le-security -f vault-values.yaml
+
+server:
+  standalone:
+    enabled: true
+    config: |
+      ui = true
+
+      listener "tcp" {
+        tls_disable = 1
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+      }
+
+      storage "file" {
+        path = "/vault/data"
+      }
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: local-path
+
+  auditStorage:
+    enabled: true
+    size: 5Gi
+    storageClass: local-path
+
+ui:
+  enabled: true
+  serviceType: NodePort
+  serviceNodePort: 30085
+
+injector:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 128Mi

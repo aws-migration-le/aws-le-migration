@@ -1,0 +1,70 @@
+Step,Order,Resource Type,Resource ID,Resource Name,Details,Status,Dependency,Monthly Cost,AWS CLI Command
+1,1,K8s Namespace,le-dev,le-dev,Dev namespace + NetworkPolicy + Quota + LimitRange,Active,None,$0,kubectl delete namespace le-dev --ignore-not-found
+1,2,K8s Namespace,le-monitoring,le-monitoring,Monitoring namespace + PDB,Active,None,$0,kubectl delete namespace le-monitoring --ignore-not-found
+1,3,K8s Namespace,le-workloads,le-workloads,Workloads namespace + NetworkPolicy + PDB,Active,None,$0,kubectl delete namespace le-workloads --ignore-not-found
+1,4,K8s PriorityClass,le-critical,le-critical,Critical workloads priority,Active,None,$0,kubectl delete priorityclass le-critical le-standard --ignore-not-found
+1,5,K8s StorageClass,local-path,local-path,Rancher local-path provisioner,Active,None,$0,kubectl delete sc local-path --ignore-not-found
+2,1,EKS Addon,vpc-cni,vpc-cni v1.20.4,VPC CNI plugin,ACTIVE,Step 1,$0,aws eks delete-addon --cluster-name le-shared-eks --addon-name vpc-cni
+2,2,EKS Addon,kube-proxy,kube-proxy v1.29.15,Kube proxy,ACTIVE,Step 1,$0,aws eks delete-addon --cluster-name le-shared-eks --addon-name kube-proxy
+2,3,EKS Addon,coredns,coredns v1.11.1,DNS addon,UPDATE_FAILED,Step 1,$0,aws eks delete-addon --cluster-name le-shared-eks --addon-name coredns
+3,1,OIDC Provider,arn:aws:iam::654697417727:oidc-provider/oidc.eks.ap-south-1.amazonaws.com/id/6AA304CECC2E9D35F6B43EDF4FC8CBA2,EKS OIDC,IRSA identity provider,Active,Step 2,$0,aws iam delete-open-id-connect-provider --open-id-connect-provider-arn <ARN>
+3,2,EKS Cluster,le-shared-eks,le-shared-eks,v1.31 Hybrid Nodes Public+Private API,ACTIVE,Step 2,$73/mo,aws eks delete-cluster --name le-shared-eks
+4,1,WAF Web ACL,6a89c014-137f-4549-8ed0-ae0b5989f9ee,linkedeye-waf-acl,Regional WAF ACL,Active,None,$0,aws wafv2 delete-web-acl --name linkedeye-waf-acl --scope REGIONAL --id <ID> --lock-token <TOKEN>
+5,1,ALB,arn:aws:elasticloadbalancing:ap-south-1:654697417727:loadbalancer/app/linkedeye-tools-alb/c913df81a6f3a7ba,linkedeye-tools-alb,Internet-facing 6 host rules,Active,Step 4,$25/mo,aws elbv2 delete-load-balancer --load-balancer-arn <ARN>
+5,2,Target Group,arn:aws:elasticloadbalancing:ap-south-1:654697417727:targetgroup/linkedeye-tg-jenkins/8fc9bdd8600ce39c,linkedeye-tg-jenkins,EC2-A:8080 health:/login,Active,Step 5.1,$0,aws elbv2 delete-target-group --target-group-arn <ARN>
+5,3,Target Group,arn:aws:elasticloadbalancing:ap-south-1:654697417727:targetgroup/linkedeye-tg-argocd/331b462b2f716127,linkedeye-tg-argocd,EC2-B:8082 health:/,Active,Step 5.1,$0,aws elbv2 delete-target-group --target-group-arn <ARN>
+5,4,Target Group,arn:aws:elasticloadbalancing:ap-south-1:654697417727:targetgroup/linkedeye-tg-harbor/02b9ca4494d33fa0,linkedeye-tg-harbor,EC2-B:8083 health:/,Active,Step 5.1,$0,aws elbv2 delete-target-group --target-group-arn <ARN>
+5,5,Target Group,arn:aws:elasticloadbalancing:ap-south-1:654697417727:targetgroup/linkedeye-tg-keycloak/fd615709870cb03b,linkedeye-tg-keycloak,EC2-B:8081 health:/,Active,Step 5.1,$0,aws elbv2 delete-target-group --target-group-arn <ARN>
+5,6,Target Group,arn:aws:elasticloadbalancing:ap-south-1:654697417727:targetgroup/linkedeye-tg-vault/397c3359b6c6b686,linkedeye-tg-vault,EC2-B:8200 health:/v1/sys/health,Active,Step 5.1,$0,aws elbv2 delete-target-group --target-group-arn <ARN>
+5,7,Target Group,arn:aws:elasticloadbalancing:ap-south-1:654697417727:targetgroup/linkedeye-tg-itsm/a20159d7ad50637e,linkedeye-tg-itsm,EC2-B:80 health:/,Active,Step 5.1,$0,aws elbv2 delete-target-group --target-group-arn <ARN>
+6,1,EC2 Instance,i-049223927d8d7f199,linkedeye-jenkins-ec2,m5.large Private:10.100.1.244 Public:13.232.32.128,Running,Step 5,$69/mo,aws ec2 terminate-instances --instance-ids i-049223927d8d7f199
+6,2,EC2 Instance,i-0670d052f2b68d2b7,linkedeye-mgmt-itsm-ec2,m5.xlarge Private:10.100.1.92 Public:13.201.36.214,Running,Step 5,$140/mo,aws ec2 terminate-instances --instance-ids i-0670d052f2b68d2b7
+6,3,Elastic IP,eipalloc-0d27c4d3641d11b39,Jenkins EIP,13.232.32.128,In-use,Step 6.1,$3.65/mo,aws ec2 release-address --allocation-id eipalloc-0d27c4d3641d11b39
+6,4,Elastic IP,eipalloc-06727544fcb365548,EIP,65.1.232.249,In-use,Step 6.1,$3.65/mo,aws ec2 release-address --allocation-id eipalloc-06727544fcb365548
+6,5,Elastic IP,eipalloc-007f0e64d5cae7122,EIP,65.1.239.132,In-use,Step 6.1,$3.65/mo,aws ec2 release-address --allocation-id eipalloc-007f0e64d5cae7122
+7,1,NAT Gateway,nat-06401f68c43ff9511,NAT GW,Public subnet EIP:13.233.176.240,Available,Step 6,$33/mo,aws ec2 delete-nat-gateway --nat-gateway-id nat-06401f68c43ff9511
+7,2,Elastic IP,eipalloc-014e06786633bd4d3,NAT GW EIP,13.233.176.240,In-use,Step 7.1,$3.65/mo,aws ec2 release-address --allocation-id eipalloc-014e06786633bd4d3
+7,3,Internet Gateway,igw-03f7860ecc90aafd4,IGW,Attached to VPC,Attached,Step 7.1,Included,aws ec2 detach-internet-gateway --internet-gateway-id igw-03f7860ecc90aafd4 --vpc-id vpc-0b902465605d6c6d6
+8,1,Security Group,sg-09712c60974c52dac,linkedeye-efs-sg,EFS NFS from K8s nodes,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-09712c60974c52dac
+8,2,Security Group,sg-009fb45c8974aec2b,linkedeye-k8s-master-sg,K8s Master API+etcd,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-009fb45c8974aec2b
+8,3,Security Group,sg-0524a49c4102967d8,linkedeye-alb-sg,ALB public HTTPS,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-0524a49c4102967d8
+8,4,Security Group,sg-074102b51f3aae1cf,linkedeye-eks-cluster-sg,EKS Control Plane,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-074102b51f3aae1cf
+8,5,Security Group,sg-0accd6dbf5fb4ca5a,linkedeye-k8s-worker-sg,K8s Workers,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-0accd6dbf5fb4ca5a
+8,6,Security Group,sg-041ea1d03d124de1f,le-k8s-master-sg,Old K8s Master,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-041ea1d03d124de1f
+8,7,Security Group,sg-0cad5f5884025ae0a,le-alb-sg,Old ALB SG,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-0cad5f5884025ae0a
+8,8,Security Group,sg-013cc075e147c368a,eks-cluster-sg-le-shared-eks,EKS managed SG,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-013cc075e147c368a
+8,9,Security Group,sg-05042ef82f2e33d73,linkedeye-eks-hybrid-sg,EKS Hybrid Node,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-05042ef82f2e33d73
+8,10,Security Group,sg-0eeda0ad9dbfd327c,linkedeye-nlb-sg,NLB SG,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-0eeda0ad9dbfd327c
+8,11,Security Group,sg-054ab3bcb200cbb1e,linkedeye-bastion-sg,Bastion SSH,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-054ab3bcb200cbb1e
+8,12,Security Group,sg-07e59c5082bd0d740,linkedeye-mgmt-ec2-sg,Mgmt EC2,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-07e59c5082bd0d740
+8,13,Security Group,sg-0c49310672a092d83,le-k8s-worker-sg,Old K8s Worker,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-0c49310672a092d83
+8,14,Security Group,sg-018551ed40ed8622b,linkedeye-jenkins-ec2-sg,Jenkins EC2,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-018551ed40ed8622b
+8,15,Security Group,sg-04aacf4fa8a9e9438,le-bastion-sg,Old Bastion,Active,Steps 3+5+6+7,$0,aws ec2 delete-security-group --group-id sg-04aacf4fa8a9e9438
+8,16,Subnet,subnet-074f1da66fc7166fb,Public AZ1a,10.100.1.0/24 ap-south-1a,Active,Step 8 SGs,$0,aws ec2 delete-subnet --subnet-id subnet-074f1da66fc7166fb
+8,17,Subnet,subnet-0b0e89de77a4c35a1,Public AZ1b,10.100.2.0/24 ap-south-1b,Active,Step 8 SGs,$0,aws ec2 delete-subnet --subnet-id subnet-0b0e89de77a4c35a1
+8,18,Subnet,subnet-065784ff2566bace7,Private AZ1a,10.100.10.0/24 ap-south-1a,Active,Step 8 SGs,$0,aws ec2 delete-subnet --subnet-id subnet-065784ff2566bace7
+8,19,Subnet,subnet-081fd4945c6460889,Private AZ1b EKS,10.100.11.0/24 ap-south-1b,Active,Step 8 SGs,$0,aws ec2 delete-subnet --subnet-id subnet-081fd4945c6460889
+8,20,Subnet,subnet-0d7fda38d5e1b0566,Private AZ1c EKS,10.100.12.0/24 ap-south-1c,Active,Step 8 SGs,$0,aws ec2 delete-subnet --subnet-id subnet-0d7fda38d5e1b0566
+8,21,Route Table,rtb-0f3a98183f76157c2,Public RTB,Public route table,Active,Step 8 subnets,$0,aws ec2 delete-route-table --route-table-id rtb-0f3a98183f76157c2
+8,22,Route Table,rtb-0e09679e0015cf78f,Private RTB,Private route table,Active,Step 8 subnets,$0,aws ec2 delete-route-table --route-table-id rtb-0e09679e0015cf78f
+8,23,VPC,vpc-0b902465605d6c6d6,LinkedEye VPC,10.100.0.0/16,Active,Step 8 RTBs,$0,aws ec2 delete-vpc --vpc-id vpc-0b902465605d6c6d6
+9,1,IAM Role,linkedeye-eks-cluster-role,EKS Cluster Role,EKS control plane,Active,Step 3,$0,aws iam delete-role --role-name linkedeye-eks-cluster-role
+9,2,IAM Role,linkedeye-eks-nodegroup-role,EKS Nodegroup Role,Worker nodes,Active,Step 3,$0,aws iam delete-role --role-name linkedeye-eks-nodegroup-role
+9,3,IAM Role,linkedeye-mgmt-ec2-role,Mgmt EC2 Role,EC2-B instance role,Active,Step 6,$0,aws iam delete-role --role-name linkedeye-mgmt-ec2-role
+9,4,IAM Role,linkedeye-ebs-csi-driver-role,EBS CSI Role,IRSA for EBS CSI driver,Active,Step 3,$0,aws iam delete-role --role-name linkedeye-ebs-csi-driver-role
+9,5,IAM Role,linkedeye-vpc-flow-log-role,Flow Log Role,VPC flow logs,Active,None,$0,aws iam delete-role --role-name linkedeye-vpc-flow-log-role
+9,6,Instance Profile,linkedeye-mgmt-ec2-profile,Mgmt EC2 Profile,,Active,Step 6,$0,aws iam delete-instance-profile --instance-profile-name linkedeye-mgmt-ec2-profile
+9,7,Instance Profile,linkedeye-bastion-profile,Bastion Profile,,Active,None,$0,aws iam delete-instance-profile --instance-profile-name linkedeye-bastion-profile
+9,8,Instance Profile,linkedeye-k8s-master-profile,K8s Master Profile,,Active,None,$0,aws iam delete-instance-profile --instance-profile-name linkedeye-k8s-master-profile
+9,9,Instance Profile,linkedeye-k8s-worker-profile,K8s Worker Profile,,Active,None,$0,aws iam delete-instance-profile --instance-profile-name linkedeye-k8s-worker-profile
+9,10,IAM Policy,arn:aws:iam::654697417727:policy/LinkedEye-EKS-FullAccess,LinkedEye-EKS-FullAccess,Custom policy,Active,Detach first,$0,aws iam delete-policy --policy-arn <ARN>
+9,11,IAM Policy,arn:aws:iam::654697417727:policy/LinkedEye-ALB-ACM-Access,LinkedEye-ALB-ACM-Access,Custom policy,Active,Detach first,$0,aws iam delete-policy --policy-arn <ARN>
+9,12,GuardDuty,9a9ec673e09f465188403236ae0fcb31,GuardDuty Detector,Threat detection,ENABLED,None,$0,aws guardduty delete-detector --detector-id 9a9ec673e09f465188403236ae0fcb31
+9,13,CloudTrail,linkedeye-audit-trail,Audit Trail,Multi-region audit logging,Logging OFF,None,$0,aws cloudtrail delete-trail --name linkedeye-audit-trail
+9,14,ACM Certificate,arn:aws:acm:ap-south-1:654697417727:certificate/90413667-aa74-4a39-b943-d95c36b1b0f8,*.finspot.in,DNS validation pending,PENDING_VALIDATION,Step 5,$0,aws acm delete-certificate --certificate-arn <ARN>
+9,15,ACM Certificate,arn:aws:acm:ap-south-1:654697417727:certificate/91a453d1-9ff8-4de0-856e-a33c58320535,*.finspot.in (imported),GoDaddy SSL imported,ISSUED,Step 5,$0,aws acm delete-certificate --certificate-arn <ARN>
+10,1,S3 Bucket,linkedeye-audit-logs-654697417727,Audit Logs,CloudTrail logs,Active,Step 9,$0,aws s3 rm s3://linkedeye-audit-logs-654697417727 --recursive && aws s3 rb s3://linkedeye-audit-logs-654697417727
+10,2,S3 Bucket,linkedeye-velero-backups-654697417727,Velero Backups,Cluster backups,Active,None,$0,aws s3 rm s3://linkedeye-velero-backups-654697417727 --recursive && aws s3 rb s3://linkedeye-velero-backups-654697417727
+10,3,CW Log Group,/aws/eks/le-shared-eks/cluster,EKS Logs,EKS control plane logs,Active,Step 3,$0,aws logs delete-log-group --log-group-name /aws/eks/le-shared-eks/cluster
+10,4,CW Log Group,/aws/vpc/flowlogs/linkedeye,VPC Flow Logs,VPC traffic logs,Active,None,$0,aws logs delete-log-group --log-group-name /aws/vpc/flowlogs/linkedeye
+10,5,Local State,/tmp/le-network-ids.env,State File,All resource IDs,Active,Last,$0,rm -f /tmp/le-network-ids.env

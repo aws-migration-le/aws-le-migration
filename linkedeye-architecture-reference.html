@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkedEye Architecture Reference - Complete Flow & Connectivity</title>
+<style>
+  :root { --p: #1a237e; --s: #0d47a1; --g: #00c853; --w: #ff6f00; --d: #d32f2f; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0a1a; color: #e0e0e0; }
+
+  .header { background: linear-gradient(135deg, #0d1b3e 0%, #1a237e 50%, #0d47a1 100%); padding: 50px 40px; text-align: center; border-bottom: 3px solid #00c853; }
+  .header h1 { font-size: 2.8em; color: #fff; margin-bottom: 10px; }
+  .header .sub { color: #82b1ff; font-size: 1.2em; }
+  .header .meta { color: #666; margin-top: 15px; font-size: 0.85em; }
+  .badge { display: inline-block; background: rgba(0,200,83,0.15); color: #00c853; border: 1px solid #00c853; padding: 4px 15px; border-radius: 20px; font-size: 0.8em; margin: 5px; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
+
+  .section { margin-bottom: 40px; }
+  .section-title { background: linear-gradient(90deg, #1a237e, transparent); padding: 12px 20px; border-left: 4px solid #00c853; font-size: 1.4em; color: #fff; margin-bottom: 20px; border-radius: 0 8px 8px 0; }
+
+  .diagram-box { background: #0d1117; border: 1px solid #30363d; border-radius: 12px; padding: 30px; margin: 20px 0; overflow-x: auto; }
+  .diagram { font-family: 'Courier New', 'Lucida Console', monospace; white-space: pre; font-size: 13px; line-height: 1.45; color: #c9d1d9; }
+  .diagram .tier { color: #ff9800; font-weight: bold; }
+  .diagram .comp { color: #58a6ff; }
+  .diagram .ip { color: #f0883e; }
+  .diagram .port { color: #7ee787; }
+  .diagram .flow { color: #d2a8ff; }
+  .diagram .warn { color: #f85149; }
+  .diagram .ok { color: #3fb950; }
+  .diagram .dim { color: #484f58; }
+  .diagram .label { color: #e6edf3; font-weight: bold; }
+
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+  th { background: #1a237e; color: #fff; padding: 10px 14px; text-align: left; font-size: 0.85em; }
+  td { padding: 8px 14px; border-bottom: 1px solid #21262d; font-size: 0.85em; color: #c9d1d9; }
+  tr:hover td { background: #161b22; }
+
+  .info-box { background: #0d1b3e; border: 1px solid #1f6feb; border-radius: 8px; padding: 15px 20px; margin: 15px 0; }
+  .warn-box { background: #2d1b00; border: 1px solid #d29922; border-radius: 8px; padding: 15px 20px; margin: 15px 0; }
+  .ok-box { background: #0d2818; border: 1px solid #238636; border-radius: 8px; padding: 15px 20px; margin: 15px 0; }
+  .danger-box { background: #2d0000; border: 1px solid #f85149; border-radius: 8px; padding: 15px 20px; margin: 15px 0; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .flow-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px; }
+  .flow-card h3 { color: #58a6ff; margin-bottom: 10px; border-bottom: 1px solid #21262d; padding-bottom: 8px; }
+
+  .nav { background: #161b22; border-bottom: 2px solid #1a237e; padding: 12px 20px; position: sticky; top: 0; z-index: 100; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .nav a { color: #58a6ff; text-decoration: none; font-size: 0.8em; padding: 4px 12px; border: 1px solid #30363d; border-radius: 15px; }
+  .nav a:hover { background: #1a237e; border-color: #1a237e; }
+
+  @media print { body { background: #fff; color: #000; } .diagram-box { background: #f6f8fa; border-color: #d0d7de; } .diagram { color: #000; } th { background: #1a237e; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">FINSPOT TECHNOLOGY SOLUTIONS</div>
+  <h1>LinkedEye Architecture Reference</h1>
+  <div class="sub">Complete Flow, Connectivity & Architecture Diagrams</div>
+  <div class="meta">
+    AWS Account: 654697417727 | Region: ap-south-1 (Mumbai) | EKS: linkedeye-finspot-k8s-cluster<br>
+    Version 2.0 | March 12, 2026 | Confidential
+  </div>
+</div>
+
+<div class="nav">
+  <a href="#master">Master Architecture</a>
+  <a href="#network">Network Tiers</a>
+  <a href="#alb">ALB Routing</a>
+  <a href="#eks">EKS Cluster</a>
+  <a href="#hybrid">Hybrid Nodes</a>
+  <a href="#cicd">CI/CD Flow</a>
+  <a href="#deploy">Dev/UAT/Prod</a>
+  <a href="#monitor">Monitoring</a>
+  <a href="#security">Security</a>
+  <a href="#connectivity">All Connectivity</a>
+  <a href="#firewall">Firewall Rules</a>
+  <a href="#servers">Server Inventory</a>
+</div>
+
+<div class="container">
+
+<!-- ==================== MASTER ARCHITECTURE ==================== -->
+<div class="section" id="master">
+  <div class="section-title">1. Master Architecture Diagram (End-to-End)</div>
+
+  <div class="diagram-box">
+    <div class="diagram">
+<span class="tier">======================================================================</span>
+<span class="tier">  TIER 0: INTERNET (Users / Admins / Developers)</span>
+<span class="tier">======================================================================</span>
+                                  <span class="dim">|</span>
+                    <span class="flow">https://*.finspot.in</span>
+                    <span class="flow">https://prod-le.plindia.com</span>
+                    <span class="flow">https://prod-le.neo-wealth.com</span>
+                    <span class="flow">https://prod-le.flattrade.in</span>
+                    <span class="flow">https://w2w-prod-le.way2wealth.com</span>
+                    <span class="flow">https://fs-le-prod-mirae.com</span>
+                    <span class="flow">https://fs-le-prod-smifs.com</span>
+                                  <span class="dim">|</span>
+<span class="tier">======================================================================</span>
+<span class="tier">  TIER 1: DNS RESOLUTION</span>
+<span class="tier">======================================================================</span>
+                                  <span class="dim">|</span>
+                    <span class="comp">GoDaddy DNS / Client DNS</span>
+                    <span class="dim">*.finspot.in CNAME --></span> <span class="ip">linkedeye-tools-alb-922526253</span>
+                    <span class="dim">                        .ap-south-1.elb.amazonaws.com</span>
+                    <span class="dim">External domains CNAME --> same ALB DNS</span>
+                                  <span class="dim">|</span>
+                                  <span class="dim">v</span>
+<span class="tier">======================================================================</span>
+<span class="tier">  TIER 2: APPLICATION LOAD BALANCER (Internet-Facing)</span>
+<span class="tier">======================================================================</span>
+                                  <span class="dim">|</span>
+          <span class="dim">+-----------------------------------------------+</span>
+          <span class="dim">|</span>  <span class="comp">ALB: linkedeye-tools-alb</span>                     <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="dim">ARN: ...loadbalancer/app/linkedeye-tools-alb</span>  <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="ip">IPs: 65.2.133.69 / 13.205.175.135</span>            <span class="dim">|</span>
+          <span class="dim">|</span>                                               <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="ok">HTTPS :443</span>  TLS 1.3                         <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="dim">ACM Cert: *.finspot.in (ISSUED)</span>              <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="dim">ACM Certs: *.plindia.com, *.neo-wealth.com</span>  <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="dim">  *.flattrade.in, *.way2wealth.com</span>           <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="dim">  *.mirae.com, *.smifs.com (PENDING)</span>         <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="warn">HTTP :80 --> 301 Redirect to HTTPS</span>           <span class="dim">|</span>
+          <span class="dim">|</span>                                               <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="label">WAF: linkedeye-waf</span>                          <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="dim">Rules: CommonRuleSet, BadInputs, SQLi</span>       <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="dim">RateLimit: 2000 req/IP</span>                      <span class="dim">|</span>
+          <span class="dim">|</span>                                               <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="dim">Subnets: AZ1a (10.15.1.0/24)</span>                <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="dim">         AZ1b (10.15.2.0/24)</span>                <span class="dim">|</span>
+          <span class="dim">|</span>  <span class="dim">SG: sg-01f66568ac2628a64 (80,443 from all)</span> <span class="dim">|</span>
+          <span class="dim">+---+---+---+---+---+---+---+---+---+---+---+</span>
+              <span class="dim">|   |   |   |   |   |   |   |   |   |   |</span>
+<span class="tier">======================================================================</span>
+<span class="tier">  TIER 3: HOST-BASED ROUTING (27 ALB Rules)</span>
+<span class="tier">======================================================================</span>
+              <span class="dim">|   |   |   |   |   |   |   |   |   |   |</span>
+  <span class="label">MANAGEMENT TOOLS (Priority 1-6):</span>
+  <span class="port">le.jenkins.finspot.in</span>     --> <span class="comp">EC2-A :8080</span> (Jenkins CI/CD)
+  <span class="port">le.argocd.finspot.in</span>      --> <span class="comp">EC2-B :8082</span> (ArgoCD GitOps)
+  <span class="port">le.harbor.finspot.in</span>      --> <span class="comp">EC2-B :8083</span> (Harbor Registry)
+  <span class="port">le.keycloak.finspot.in</span>    --> <span class="comp">EC2-B :8081</span> (Keycloak SSO)
+  <span class="port">le.inc.finspot.in</span>         --> <span class="comp">EC2-B :80</span>   (ITSM Portal)
+  <span class="port">vault.finspot.in</span>          --> <span class="comp">EC2-B :8200</span> (Vault Secrets)
+
+  <span class="label">CLIENT PRODUCTION (Priority 10-21):</span>
+  <span class="port">indmoney-prod-le.finspot.in</span>    --> <span class="comp">EC2-B :80</span> (InDMoney)
+  <span class="port">prod-le.plindia.com</span>            --> <span class="comp">EC2-B :80</span> (PL India)
+  <span class="port">prod-le.neo-wealth.com</span>         --> <span class="comp">EC2-B :80</span> (Neo Wealth)
+  <span class="port">prod-le.flattrade.in</span>           --> <span class="comp">EC2-B :80</span> (Flattrade)
+  <span class="port">fs-le-isv.finspot.in</span>           --> <span class="comp">EC2-B :80</span> (5 ISV clients)
+  <span class="port">w2w-prod-le.way2wealth.com</span>     --> <span class="comp">EC2-B :80</span> (Way2Wealth)
+  <span class="port">fs-ifsc-le.finspot.in</span>          --> <span class="comp">EC2-B :80</span> (IFSC)
+  <span class="port">indmoney-ifsc-le.finspot.in</span>    --> <span class="comp">EC2-B :80</span> (InDMoney IFSC)
+  <span class="port">lemonn-prod-le.finspot.in</span>      --> <span class="comp">EC2-B :80</span> (Lemonn)
+  <span class="port">fs-le-dx.finspot.in</span>            --> <span class="comp">EC2-B :80</span> (DX)
+  <span class="port">fs-le-prod-mirae.com</span>           --> <span class="comp">EC2-B :80</span> (Mirae)
+  <span class="port">fs-le-prod-smifs.com</span>           --> <span class="comp">EC2-B :80</span> (SMIFS)
+
+  <span class="label">NON-PRODUCTION (Priority 22-27):</span>
+  <span class="port">indmoney-dr-le.finspot.in</span>      --> <span class="comp">EC2-B :80</span> (DR)
+  <span class="port">fs-le-dr.finspot.in</span>            --> <span class="comp">EC2-B :80</span> (DR)
+  <span class="port">fs-le-uat.finspot.in</span>           --> <span class="comp">EC2-B :80</span> (UAT)
+  <span class="port">fs-le-dev.finspot.in</span>           --> <span class="comp">EC2-B :80</span> (DEV)
+  <span class="port">fs-le-dev1.finspot.in</span>          --> <span class="comp">EC2-B :80</span> (DEV)
+  <span class="port">fs-le-dev2.finspot.in</span>          --> <span class="comp">EC2-B :80</span> (DEV)
+
+  <span class="warn">default (no match)</span>             --> <span class="warn">404 Not Found</span>
+              <span class="dim">|</span>
+<span class="tier">======================================================================</span>
+<span class="tier">  TIER 4: PUBLIC SUBNET  (10.15.1.0/24 + 10.15.2.0/24)</span>
+<span class="tier">  VPC: vpc-01d43b65392eb7364  CIDR: 10.15.0.0/16</span>
+<span class="tier">======================================================================</span>
+              <span class="dim">|</span>
+  <span class="dim">+-----------------------+          +----------------------------------+</span>
+  <span class="dim">|</span> <span class="comp">EC2-A (Jenkins)</span>       <span class="dim">|          |</span> <span class="comp">EC2-B (Mgmt + ITSM)</span>             <span class="dim">|</span>
+  <span class="dim">|</span> <span class="ip">i-0a9159a2543b2e9c3</span>  <span class="dim">|          |</span> <span class="ip">i-03ed15e786ddd4340</span>            <span class="dim">|</span>
+  <span class="dim">|</span> <span class="ip">15.206.123.199</span> (EIP) <span class="dim">|          |</span> <span class="ip">15.206.80.24</span> (EIP)              <span class="dim">|</span>
+  <span class="dim">|</span> m5.xlarge (4C/16G)    <span class="dim">|          |</span> m5.2xlarge (8C/32G)              <span class="dim">|</span>
+  <span class="dim">|</span> Ubuntu 22.04 LTS      <span class="dim">|          |</span> Ubuntu 22.04 LTS                <span class="dim">|</span>
+  <span class="dim">|</span> SG: sg-01b7dc73be..   <span class="dim">|          |</span> SG: sg-0ff7d92d72..              <span class="dim">|</span>
+  <span class="dim">|</span>                       <span class="dim">|          |</span>                                  <span class="dim">|</span>
+  <span class="dim">|</span> <span class="port">Jenkins     :8080</span>    <span class="dim">|          |</span> <span class="port">Harbor Reg  :5000</span>  (Docker API)  <span class="dim">|</span>
+  <span class="dim">|</span> <span class="port">SSH         :22</span>      <span class="dim">|          |</span> <span class="port">Harbor UI   :8083</span>               <span class="dim">|</span>
+  <span class="dim">|</span>                       <span class="dim">|          |</span> <span class="port">ArgoCD      :8082</span>               <span class="dim">|</span>
+  <span class="dim">|</span>                       <span class="dim">|          |</span> <span class="port">Keycloak    :8081</span>               <span class="dim">|</span>
+  <span class="dim">|</span>                       <span class="dim">|          |</span> <span class="port">Vault       :8200</span>               <span class="dim">|</span>
+  <span class="dim">|</span>                       <span class="dim">|          |</span> <span class="port">PostgreSQL  :5432</span> (internal)    <span class="dim">|</span>
+  <span class="dim">|</span>                       <span class="dim">|          |</span> <span class="port">ITSM        :80</span>                 <span class="dim">|</span>
+  <span class="dim">|</span>                       <span class="dim">|          |</span> <span class="port">SSH         :22</span>                 <span class="dim">|</span>
+  <span class="dim">+-----------------------+          +----------------------------------+</span>
+              <span class="dim">|</span>                                    <span class="dim">|</span>
+  <span class="dim">+-----------------------+          +----------------------------------+</span>
+  <span class="dim">|</span> <span class="comp">NAT GW AZ1</span>            <span class="dim">|          |</span> <span class="comp">NAT GW AZ2</span>                     <span class="dim">|</span>
+  <span class="dim">|</span> <span class="ip">nat-05ecf9d90261115bd</span><span class="dim">|          |</span> <span class="ip">nat-0a9efa6a8ac67df50</span>          <span class="dim">|</span>
+  <span class="dim">|</span> <span class="ip">15.207.153.110</span> (EIP) <span class="dim">|          |</span> <span class="ip">43.204.194.63</span> (EIP)            <span class="dim">|</span>
+  <span class="dim">|</span> subnet: 10.15.1.0/24  <span class="dim">|          |</span> subnet: 10.15.2.0/24            <span class="dim">|</span>
+  <span class="dim">+-----------------------+          +----------------------------------+</span>
+              <span class="dim">|                                    |</span>
+              <span class="dim">+----------------+-------------------+</span>
+                               <span class="dim">|</span>
+  <span class="dim">+-----------------------+</span>
+  <span class="dim">|</span> <span class="comp">IGW: igw-02b8ef9f5e..</span><span class="dim">|</span>
+  <span class="dim">|</span> Internet Gateway       <span class="dim">|</span>
+  <span class="dim">+-----------------------+</span>
+                               <span class="dim">|</span>
+<span class="tier">======================================================================</span>
+<span class="tier">  TIER 5: PRIVATE SUBNETS (EKS Control Plane ENIs)</span>
+<span class="tier">  10.15.10.0/24 (AZ1a) + 10.15.11.0/24 (AZ1b)</span>
+<span class="tier">======================================================================</span>
+                               <span class="dim">|</span>
+  <span class="dim">+------------------------------------------------------+</span>
+  <span class="dim">|</span>  <span class="comp">EKS CONTROL PLANE (AWS Managed)</span>                     <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="label">linkedeye-finspot-k8s-cluster</span>   K8s <span class="ok">v1.31  ACTIVE</span>  <span class="dim">|</span>
+  <span class="dim">|</span>                                                      <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">+------------+  +------------+</span>                     <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">|</span> <span class="comp">API Server</span> <span class="dim">|  |</span> <span class="comp">API Server</span> <span class="dim">|</span>  (Multi-AZ HA)       <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">|</span>  (AZ 1a)   <span class="dim">|  |</span>  (AZ 1b)   <span class="dim">|</span>                     <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">+------------+  +------------+</span>                     <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">+------------+  +------------+</span>                     <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">|</span> <span class="comp">etcd</span>       <span class="dim">|  |</span> <span class="comp">etcd</span>       <span class="dim">|</span>  (Replicated)        <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">|</span>  (AZ 1a)   <span class="dim">|  |</span>  (AZ 1b)   <span class="dim">|</span>                     <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">+------------+  +------------+</span>                     <span class="dim">|</span>
+  <span class="dim">|</span>                                                      <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="label">Public API Endpoint:</span>                               <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="ip">https://11CBD16DDC759507469188FB0FCB690D</span>            <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="ip">        .gr7.ap-south-1.eks.amazonaws.com</span>           <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="ip">IPs: 13.206.10.12 / 13.205.107.216</span>                 <span class="dim">|</span>
+  <span class="dim">|</span>                                                      <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="label">ENIs in:</span>                                           <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">  subnet-0f5887a9f7bd825d6 (10.15.10.0/24 AZ1a)</span>   <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">  subnet-05cd5f6bf97410bc5 (10.15.11.0/24 AZ1b)</span>   <span class="dim">|</span>
+  <span class="dim">|</span>                                                      <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="label">Addons:</span> vpc-cni | coredns | kube-proxy              <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="label">Storage:</span> gp3 (default, EBS CSI)                     <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="label">Logging:</span> api, audit, auth, ctrlmgr, scheduler       <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="label">OIDC:</span> <span class="ip">11CBD16DDC759507469188FB0FCB690D</span>              <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="label">SG:</span> sg-07e2a335b24ecaac1 (EKS cluster)              <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="label">HA:</span> 99.95% SLA, Multi-AZ redundancy                 <span class="dim">|</span>
+  <span class="dim">|</span>                                                      <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="label">Namespaces (24):</span>                                   <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="ok">Platform:</span>  le-monitoring, le-workloads               <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="flow">Non-Prod:</span>  le-dev, le-uat, le-dr                     <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="warn">Prod x15:</span>  le-indmoney-prod, le-neo-wealth-prod     <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">           le-dx-prod, le-ifsc-prod, le-w2w-prod</span>    <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">           le-ftc-prod, le-pl-india-prod</span>             <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">           le-isv1..isv5-prod, le-mirae-prod</span>        <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">           le-smifs-prod, le-lemonn-prod</span>             <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">System:    kube-system, default, kube-public,</span>       <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="dim">           kube-node-lease</span>                          <span class="dim">|</span>
+  <span class="dim">|</span>                                                      <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="label">Priority Classes:</span>                                  <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="warn">le-critical (1000000)</span> | <span class="flow">le-high (500000)</span>            <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="ok">le-normal (100000, default)</span>                         <span class="dim">|</span>
+  <span class="dim">|</span>                                                      <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="label">ClusterRoles:</span>                                      <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="comp">le-client-admin</span> (pods/deploy/svc CRUD)              <span class="dim">|</span>
+  <span class="dim">|</span>  <span class="comp">le-argocd-deployer</span> (full NS access for GitOps)      <span class="dim">|</span>
+  <span class="dim">+------------------------------------------------------+</span>
+                               <span class="dim">|</span>
+                     <span class="flow">HTTPS 443 (Public EKS API)</span>
+                     <span class="ok">OUTBOUND from client sites</span>
+                     <span class="ok">NO VPN REQUIRED</span>
+                               <span class="dim">|</span>
+<span class="tier">======================================================================</span>
+<span class="tier">  TIER 6: ON-PREM CLIENT SITES (16 Clients, 32 Hybrid Nodes)</span>
+<span class="tier">  Connected via INTERNET (HTTPS 443 outbound only)</span>
+<span class="tier">======================================================================</span>
+                               <span class="dim">|</span>
+    <span class="dim">+----------+-----------+-----------+-----------+</span>
+    <span class="dim">|          |           |           |           |</span>
+    <span class="dim">v          v           v           v           v</span>
+<span class="dim">+----------+ +----------+ +----------+ +----------+ +----------+</span>
+<span class="dim">|</span><span class="label">INDMONEY</span>  <span class="dim">| |</span><span class="label">NEO</span>       <span class="dim">| |</span><span class="label">DX</span>        <span class="dim">| |</span><span class="label">FTC</span>       <span class="dim">| |</span><span class="label">W2W</span>       <span class="dim">|</span>
+<span class="dim">|</span>Mumbai+BLR<span class="dim">| |</span>Wealth    <span class="dim">| |</span>          <span class="dim">| |</span>Flattrade <span class="dim">| |</span>Way2Wealth<span class="dim">|</span>
+<span class="dim">+----------+ +----------+ +----------+ +----------+ +----------+</span>
+<span class="dim">|</span>FortiGate <span class="dim">| |</span>FortiGate <span class="dim">| |</span>FortiGate <span class="dim">| |</span>FortiGate <span class="dim">| |</span>FortiGate <span class="dim">|</span>
+<span class="dim">|</span>Firewall  <span class="dim">| |</span>Firewall  <span class="dim">| |</span>Firewall  <span class="dim">| |</span>Firewall  <span class="dim">| |</span>Firewall  <span class="dim">|</span>
+<span class="dim">|</span>OUT 443   <span class="dim">| |</span>OUT 443   <span class="dim">| |</span>OUT 443   <span class="dim">| |</span>OUT 443   <span class="dim">| |</span>OUT 443   <span class="dim">|</span>
+<span class="dim">+----------+ +----------+ +----------+ +----------+ +----------+</span>
+<span class="dim">|</span>Worker 1  <span class="dim">| |</span>Worker 1  <span class="dim">| |</span>Worker 1  <span class="dim">| |</span>Worker 1  <span class="dim">| |</span>Worker 1  <span class="dim">|</span>
+<span class="dim">|</span><span class="ip">10.172.0.10</span><span class="dim">| |</span><span class="ip">10.40.1.10</span><span class="dim">| |</span><span class="ip">10.10.10.110</span><span class="dim">|</span><span class="ip">202.87.54.194</span><span class="dim">|</span>         <span class="dim">|</span>
+<span class="dim">|</span>Worker 2  <span class="dim">| |</span>Worker 2  <span class="dim">| |</span>Worker 2  <span class="dim">| |</span>Worker 2  <span class="dim">| |</span>Worker 2  <span class="dim">|</span>
+<span class="dim">|</span><span class="ip">10.173.0.10</span><span class="dim">| |</span>          <span class="dim">| |</span>          <span class="dim">| |</span>          <span class="dim">| |</span>          <span class="dim">|</span>
+<span class="dim">|</span>          <span class="dim">| |</span>          <span class="dim">| |</span>          <span class="dim">| |</span>          <span class="dim">| |</span>          <span class="dim">|</span>
+<span class="dim">|</span><span class="ok">SSM Agent</span> <span class="dim">| |</span><span class="ok">SSM Agent</span> <span class="dim">| |</span><span class="ok">SSM Agent</span> <span class="dim">| |</span><span class="ok">SSM Agent</span> <span class="dim">| |</span><span class="ok">SSM Agent</span> <span class="dim">|</span>
+<span class="dim">|</span><span class="ok">kubelet</span>   <span class="dim">| |</span><span class="ok">kubelet</span>   <span class="dim">| |</span><span class="ok">kubelet</span>   <span class="dim">| |</span><span class="ok">kubelet</span>   <span class="dim">| |</span><span class="ok">kubelet</span>   <span class="dim">|</span>
+<span class="dim">|</span><span class="ok">containerd</span><span class="dim">| |</span><span class="ok">containerd</span><span class="dim">| |</span><span class="ok">containerd</span><span class="dim">| |</span><span class="ok">containerd</span><span class="dim">| |</span><span class="ok">containerd</span><span class="dim">|</span>
+<span class="dim">|</span>          <span class="dim">| |</span>          <span class="dim">| |</span>          <span class="dim">| |</span>          <span class="dim">| |</span>          <span class="dim">|</span>
+<span class="dim">|</span> <span class="flow">Pod A-1</span>  <span class="dim">| |</span> <span class="flow">Pod A-1</span>  <span class="dim">| |</span> <span class="flow">Pod A-1</span>  <span class="dim">| |</span> <span class="flow">Pod A-1</span>  <span class="dim">| |</span> <span class="flow">Pod A-1</span>  <span class="dim">|</span>
+<span class="dim">|</span> <span class="flow">Pod B-1</span>  <span class="dim">| |</span> <span class="flow">Pod B-1</span>  <span class="dim">| |</span> <span class="flow">Pod B-1</span>  <span class="dim">| |</span> <span class="flow">Pod B-1</span>  <span class="dim">| |</span> <span class="flow">Pod B-1</span>  <span class="dim">|</span>
+<span class="dim">+----------+ +----------+ +----------+ +----------+ +----------+</span>
+
+  <span class="dim">(+ 11 more client sites: IFSC, PL India, ISV x5, Mirae, SMIFS, Lemonn, InDMoney-IFSC)</span>
+
+<span class="label">  Per Client Node Config:</span>
+  <span class="dim">Labels:</span>  <span class="ok">client=&lt;name&gt;</span>  <span class="ok">node-type=hybrid</span>
+  <span class="dim">Taints:</span>  <span class="warn">client=&lt;name&gt;:NoSchedule</span>
+  <span class="dim">HA:</span>      2 nodes per client, pods spread via anti-affinity
+  <span class="dim">PDB:</span>     minAvailable=1 (always 1 pod running)
+</div>
+  </div>
+</div>
+
+<!-- ==================== HYBRID NODE FLOW ==================== -->
+<div class="section" id="hybrid">
+  <div class="section-title">2. Hybrid Node Registration & Communication Flow</div>
+
+  <div class="diagram-box">
+    <div class="diagram">
+<span class="label">HYBRID NODE REGISTRATION FLOW (Per Client)</span>
+<span class="tier">══════════════════════════════════════════════</span>
+
+<span class="label">STEP 1:</span> Admin creates SSM Hybrid Activation
+<span class="dim">┌──────────────────┐</span>           <span class="dim">┌──────────────────┐</span>
+<span class="dim">│</span> <span class="comp">Admin PC</span>          <span class="dim">│</span>           <span class="dim">│</span> <span class="comp">AWS SSM</span>           <span class="dim">│</span>
+<span class="dim">│</span> (DevOps Team)     <span class="dim">│</span> ========> <span class="dim">│</span> create-activation <span class="dim">│</span>
+<span class="dim">│</span>                   <span class="dim">│</span> <======== <span class="dim">│</span> Returns:          <span class="dim">│</span>
+<span class="dim">│</span>                   <span class="dim">│</span>           <span class="dim">│</span>  <span class="ip">Activation ID</span>    <span class="dim">│</span>
+<span class="dim">│</span>                   <span class="dim">│</span>           <span class="dim">│</span>  <span class="ip">Activation Code</span>  <span class="dim">│</span>
+<span class="dim">└──────────────────┘</span>           <span class="dim">└──────────────────┘</span>
+
+<span class="label">STEP 2:</span> Install SSM Agent + nodeadm on client server
+<span class="dim">┌────────────────────────────────────────────────┐</span>
+<span class="dim">│</span> <span class="comp">On-Prem Worker</span> (Client Site - e.g. InDMoney)    <span class="dim">│</span>
+<span class="dim">│</span>                                                  <span class="dim">│</span>
+<span class="dim">│</span>  $ <span class="port">sudo apt install amazon-ssm-agent</span>             <span class="dim">│</span>
+<span class="dim">│</span>  $ <span class="port">sudo amazon-ssm-agent -register \</span>             <span class="dim">│</span>
+<span class="dim">│</span>      <span class="port">-id "ACTIVATION_ID" \</span>                       <span class="dim">│</span>
+<span class="dim">│</span>      <span class="port">-code "ACTIVATION_CODE" \</span>                    <span class="dim">│</span>
+<span class="dim">│</span>      <span class="port">-region ap-south-1</span>                            <span class="dim">│</span>
+<span class="dim">│</span>                                                  <span class="dim">│</span>
+<span class="dim">│</span>  Result: <span class="ok">Node registered as mi-0xxxxxxxxx</span>        <span class="dim">│</span>
+<span class="dim">└────────────────────────────────────────────────┘</span>
+
+<span class="label">STEP 3:</span> Bootstrap to EKS
+<span class="dim">┌────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  $ <span class="port">sudo nodeadm install 1.31 \</span>                  <span class="dim">│</span>
+<span class="dim">│</span>      <span class="port">--credential-provider ssm</span>                   <span class="dim">│</span>
+<span class="dim">│</span>                                                  <span class="dim">│</span>
+<span class="dim">│</span>  $ <span class="port">cat > /etc/eks/nodeadm-config.yaml</span>            <span class="dim">│</span>
+<span class="dim">│</span>  <span class="flow">apiVersion: node.eks.aws/v1alpha1</span>              <span class="dim">│</span>
+<span class="dim">│</span>  <span class="flow">kind: NodeConfig</span>                               <span class="dim">│</span>
+<span class="dim">│</span>  <span class="flow">spec:</span>                                          <span class="dim">│</span>
+<span class="dim">│</span>    <span class="flow">cluster:</span>                                     <span class="dim">│</span>
+<span class="dim">│</span>      <span class="flow">name: linkedeye-finspot-k8s-cluster</span>        <span class="dim">│</span>
+<span class="dim">│</span>      <span class="flow">region: ap-south-1</span>                         <span class="dim">│</span>
+<span class="dim">│</span>    <span class="flow">hybrid:</span>                                      <span class="dim">│</span>
+<span class="dim">│</span>      <span class="flow">ssm:</span>                                       <span class="dim">│</span>
+<span class="dim">│</span>        <span class="flow">activationId: "..."</span>                      <span class="dim">│</span>
+<span class="dim">│</span>        <span class="flow">activationCode: "..."</span>                    <span class="dim">│</span>
+<span class="dim">│</span>                                                  <span class="dim">│</span>
+<span class="dim">│</span>  $ <span class="port">sudo nodeadm init</span>                             <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">--> kubelet starts, connects to EKS API</span>        <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">--> Node appears: kubectl get nodes</span>             <span class="dim">│</span>
+<span class="dim">└────────────────────────────────────────────────┘</span>
+
+<span class="label">STEP 4:</span> Label, taint, verify
+<span class="dim">┌────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  $ <span class="port">kubectl label node mi-0xxx \</span>                  <span class="dim">│</span>
+<span class="dim">│</span>      <span class="port">client=indmoney node-type=hybrid</span>             <span class="dim">│</span>
+<span class="dim">│</span>  $ <span class="port">kubectl taint node mi-0xxx \</span>                  <span class="dim">│</span>
+<span class="dim">│</span>      <span class="port">client=indmoney:NoSchedule</span>                   <span class="dim">│</span>
+<span class="dim">│</span>                                                  <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">Result: Only le-indmoney-prod pods run here</span>    <span class="dim">│</span>
+<span class="dim">└────────────────────────────────────────────────┘</span>
+
+<span class="tier">══════════════════════════════════════════════</span>
+<span class="label">ONGOING COMMUNICATION (After Registration)</span>
+<span class="tier">══════════════════════════════════════════════</span>
+
+<span class="comp">On-Prem Worker Node</span>
+    <span class="dim">│</span>
+    <span class="dim">│</span>  <span class="ok">ALL TRAFFIC IS OUTBOUND HTTPS 443</span>
+    <span class="dim">│</span>  <span class="ok">NO INBOUND PORTS NEEDED</span>
+    <span class="dim">│</span>  <span class="ok">NO VPN NEEDED</span>
+    <span class="dim">│</span>
+    <span class="dim">├──></span> <span class="ip">13.206.10.12 / 13.205.107.216</span>  <span class="comp">EKS API</span>
+    <span class="dim">│</span>    kubelet heartbeat every 10s
+    <span class="dim">│</span>    Pod specs, status updates
+    <span class="dim">│</span>
+    <span class="dim">├──></span> <span class="ip">13.200.93.131</span>                  <span class="comp">SSM</span>
+    <span class="dim">│</span>    Node management channel
+    <span class="dim">│</span>
+    <span class="dim">├──></span> <span class="ip">13.200.91.130</span>                  <span class="comp">SSM Messages</span>
+    <span class="dim">│</span>    Remote command execution
+    <span class="dim">│</span>
+    <span class="dim">├──></span> <span class="ip">13.200.90.177</span>                  <span class="comp">EC2 Messages</span>
+    <span class="dim">│</span>    Instance messaging
+    <span class="dim">│</span>
+    <span class="dim">├──></span> <span class="ip">13.200.93.41</span>                   <span class="comp">STS</span>
+    <span class="dim">│</span>    IAM token refresh (every 1hr)
+    <span class="dim">│</span>
+    <span class="dim">├──></span> <span class="ip">13.234.8.23</span>                    <span class="comp">ECR API</span>
+    <span class="dim">│</span>    Container registry queries
+    <span class="dim">│</span>
+    <span class="dim">├──></span> <span class="ip">13.232.222.26</span>                  <span class="comp">ECR Docker</span>
+    <span class="dim">│</span>    Image pulls on deployment
+    <span class="dim">│</span>
+    <span class="dim">└──></span> <span class="ip">3.5.211.0/24</span>                   <span class="comp">S3</span>
+         Docker image layer storage
+</div>
+  </div>
+</div>
+
+<!-- ==================== CI/CD FLOW ==================== -->
+<div class="section" id="cicd">
+  <div class="section-title">3. CI/CD Pipeline Flow (End-to-End)</div>
+
+  <div class="diagram-box">
+    <div class="diagram">
+<span class="label">DEPLOYMENT PIPELINE: Developer --> Production</span>
+<span class="tier">══════════════════════════════════════════════════════════</span>
+
+<span class="comp">STAGE 1: SOURCE</span>
+<span class="dim">┌──────────────┐</span>       <span class="dim">┌──────────────┐</span>       <span class="dim">┌──────────────────────┐</span>
+<span class="dim">│</span> <span class="label">Developer</span>    <span class="dim">│</span>  git  <span class="dim">│</span> <span class="label">GitHub</span>       <span class="dim">│</span> hook  <span class="dim">│</span> <span class="label">Jenkins (EC2-A)</span>      <span class="dim">│</span>
+<span class="dim">│</span> Local IDE    <span class="dim">│</span> push  <span class="dim">│</span> Repository   <span class="dim">│</span> ====> <span class="dim">│</span> <span class="port">le.jenkins.finspot.in</span><span class="dim">│</span>
+<span class="dim">│</span>              <span class="dim">│</span> ====> <span class="dim">│</span>              <span class="dim">│</span>       <span class="dim">│</span> <span class="ip">15.206.123.199:8080</span>  <span class="dim">│</span>
+<span class="dim">└──────────────┘</span>       <span class="dim">└──────────────┘</span>       <span class="dim">└──────────┬───────────┘</span>
+                                                          <span class="dim">│</span>
+<span class="comp">STAGE 2: BUILD + TEST</span>                                    <span class="dim">│</span>
+<span class="dim">┌─────────────────────────────────────────────────────────v───────────┐</span>
+<span class="dim">│</span>  <span class="label">Jenkins Pipeline</span>                                                  <span class="dim">│</span>
+<span class="dim">│</span>                                                                    <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">1.</span> git checkout source code                                       <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">2.</span> docker build -t le.harbor.finspot.in/le/app:$TAG               <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">3.</span> Run unit tests + integration tests                             <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">4.</span> Security scan (Trivy via Harbor)                                <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">5.</span> docker push to Harbor                                          <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">6.</span> Update K8s manifest with new image tag                          <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">7.</span> git commit + push manifest change                               <span class="dim">│</span>
+<span class="dim">└─────────────────────────────────────────────────────────┬──────────┘</span>
+                                                          <span class="dim">│</span>
+<span class="comp">STAGE 3: REGISTRY</span>                                        <span class="dim">│</span>
+<span class="dim">┌─────────────────────────────────────────────────────────v──────────┐</span>
+<span class="dim">│</span>  <span class="label">Harbor (EC2-B)</span>  <span class="port">le.harbor.finspot.in</span>  <span class="ip">15.206.80.24:5000</span>        <span class="dim">│</span>
+<span class="dim">│</span>                                                                   <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">Image stored:</span> le.harbor.finspot.in/le/app:v1.2.3                <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">Trivy scan:</span>   Vulnerability analysis completed                   <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">Notary:</span>       Image signed                                      <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">Retention:</span>    Keep last 10 tags per repo                         <span class="dim">│</span>
+<span class="dim">└─────────────────────────────────────────────────────────┬─────────┘</span>
+                                                          <span class="dim">│</span>
+<span class="comp">STAGE 4: GITOPS DEPLOY</span>                                   <span class="dim">│</span>
+<span class="dim">┌─────────────────────────────────────────────────────────v─────────┐</span>
+<span class="dim">│</span>  <span class="label">ArgoCD (EC2-B)</span>  <span class="port">le.argocd.finspot.in</span>  <span class="ip">15.206.80.24:8082</span>       <span class="dim">│</span>
+<span class="dim">│</span>                                                                  <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">1.</span> Watches Git manifests repo (polling every 3 min)              <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">2.</span> Detects new image tag in kustomization.yaml                   <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">3.</span> Syncs to target namespace (auto for dev, manual for prod)      <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">4.</span> kubectl apply to le-{client}-prod namespace                   <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">5.</span> Rolling update: maxSurge=1, maxUnavailable=0 (zero downtime)  <span class="dim">│</span>
+<span class="dim">└─────────────────────────────────────────────────────────┬────────┘</span>
+                                                          <span class="dim">│</span>
+<span class="comp">STAGE 5: RUNTIME (On-Prem)</span>                               <span class="dim">│</span>
+<span class="dim">┌─────────────────────────────────────────────────────────v────────┐</span>
+<span class="dim">│</span>  <span class="label">EKS --> Hybrid Worker Node</span> (on-prem at client site)            <span class="dim">│</span>
+<span class="dim">│</span>                                                                 <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">1.</span> kubelet receives pod spec from EKS API                       <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">2.</span> containerd pulls image from Harbor (HTTPS 443)               <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">3.</span> Pod starts with nodeSelector + toleration                    <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">4.</span> Health checks: readiness + liveness probes                   <span class="dim">│</span>
+<span class="dim">│</span>  <span class="ok">5.</span> Metrics exposed for Prometheus scraping                      <span class="dim">│</span>
+<span class="dim">│</span>                                                                 <span class="dim">│</span>
+<span class="dim">│</span>  <span class="warn">Rollback:</span> ArgoCD sync to previous Git revision (instant)      <span class="dim">│</span>
+<span class="dim">└─────────────────────────────────────────────────────────────────┘</span>
+
+
+<span class="label">ENVIRONMENT PROMOTION FLOW</span>
+<span class="tier">══════════════════════════════════════════════════════════</span>
+
+ <span class="dim">┌──────────┐</span>         <span class="dim">┌──────────┐</span>         <span class="dim">┌──────────────────┐</span>
+ <span class="dim">│</span> <span class="ok">le-dev</span>   <span class="dim">│</span> ======> <span class="dim">│</span> <span class="flow">le-uat</span>  <span class="dim">│</span> ======> <span class="dim">│</span> <span class="warn">le-*-prod (x15)</span> <span class="dim">│</span>
+ <span class="dim">│</span> (auto)   <span class="dim">│</span>         <span class="dim">│</span> (manual)<span class="dim">│</span>         <span class="dim">│</span> (approved)       <span class="dim">│</span>
+ <span class="dim">└──────────┘</span>         <span class="dim">└──────────┘</span>         <span class="dim">└──────────────────┘</span>
+
+ Trigger:              Trigger:              Trigger:
+ <span class="ok">git push develop</span>     <span class="flow">PR merge release/*</span>   <span class="warn">git tag v*</span>
+
+ Image Tag:            Image Tag:            Image Tag:
+ <span class="ok">:dev-SHA</span>              <span class="flow">:uat-SHA</span>              <span class="warn">:v1.2.3</span>
+
+ Approval:             Approval:             Approval:
+ <span class="ok">None (auto-deploy)</span>   <span class="flow">QA Sign-off</span>          <span class="warn">Ops Lead (Hoysala)</span>
+                                             <span class="warn">+ CTO (Rajkumar)</span>
+
+ FQDNs:                FQDN:                 FQDNs:
+ <span class="ok">fs-le-dev.finspot.in</span> <span class="flow">fs-le-uat.finspot.in</span> <span class="warn">indmoney-prod-le.finspot.in</span>
+ <span class="ok">fs-le-dev1.finspot.in</span>                      <span class="warn">prod-le.plindia.com</span>
+ <span class="ok">fs-le-dev2.finspot.in</span>                      <span class="warn">prod-le.neo-wealth.com</span>
+                                             <span class="warn">... (12 more)</span>
+</div>
+  </div>
+</div>
+
+<!-- ==================== MONITORING ==================== -->
+<div class="section" id="monitor">
+  <div class="section-title">4. Monitoring & Alerting Flow</div>
+
+  <div class="diagram-box">
+    <div class="diagram">
+<span class="label">MONITORING STACK</span> (le-monitoring namespace)
+<span class="tier">══════════════════════════════════════════════</span>
+
+<span class="comp">Client Workload Pod</span> (on-prem node)
+       <span class="dim">│</span>
+       <span class="dim">│</span> <span class="ok">:9090/metrics</span> (Prometheus scrape)
+       <span class="dim">v</span>
+<span class="dim">┌──────────────────┐</span>     <span class="dim">┌──────────────────┐</span>     <span class="dim">┌──────────────────┐</span>
+<span class="dim">│</span> <span class="ok">Prometheus</span>        <span class="dim">│</span>     <span class="dim">│</span> <span class="warn">Alertmanager</span>     <span class="dim">│</span>     <span class="dim">│</span> <span class="comp">Grafana</span>          <span class="dim">│</span>
+<span class="dim">│</span> Scrapes every 15s <span class="dim">│</span> ==> <span class="dim">│</span> 13 receivers     <span class="dim">│</span>     <span class="dim">│</span> Dashboards       <span class="dim">│</span>
+<span class="dim">│</span> Evaluates rules   <span class="dim">│</span>     <span class="dim">│</span> Routes by client <span class="dim">│</span>     <span class="dim">│</span> grafana.finspot  <span class="dim">│</span>
+<span class="dim">└──────────────────┘</span>     <span class="dim">└────────┬─────────┘</span>     <span class="dim">└──────────────────┘</span>
+                                  <span class="dim">│</span>
+                                  <span class="dim">v</span>
+                         <span class="dim">┌──────────────────┐</span>
+                         <span class="dim">│</span> <span class="warn">StackStorm</span>        <span class="dim">│</span>
+                         <span class="dim">│</span> <span class="ip">st2api:9101</span>       <span class="dim">│</span>
+                         <span class="dim">│</span> Automation engine <span class="dim">│</span>
+                         <span class="dim">└────────┬─────────┘</span>
+                                  <span class="dim">│</span>
+                    <span class="dim">┌─────────────┼─────────────┐</span>
+                    <span class="dim">v             v             v</span>
+              <span class="dim">┌──────────┐ ┌──────────┐ ┌──────────┐</span>
+              <span class="dim">│</span><span class="warn">ITSM</span>      <span class="dim">│ │</span><span class="comp">Email</span>     <span class="dim">│ │</span><span class="flow">Slack</span>     <span class="dim">│</span>
+              <span class="dim">│</span>Ticket    <span class="dim">│ │</span>Alert     <span class="dim">│ │</span>Channel   <span class="dim">│</span>
+              <span class="dim">│</span>Created   <span class="dim">│ │</span>Sent      <span class="dim">│ │</span>Notified  <span class="dim">│</span>
+              <span class="dim">└──────────┘ └──────────┘ └──────────┘</span>
+
+<span class="label">Alert Severity Codes (le_code):</span>
+  <span class="warn">0 = Critical</span>   Page on-call, create P1 ticket
+  <span class="flow">1 = Warning</span>    Create P2 ticket, notify channel
+  <span class="ok">2 = OK</span>         Resolve ticket, update status
+  <span class="dim">4 = Disabled</span>   Suppressed, no action
+  <span class="dim">5 = Placeholder</span>
+</div>
+  </div>
+</div>
+
+<!-- ==================== SECURITY ==================== -->
+<div class="section" id="security">
+  <div class="section-title">5. Security Architecture (6 Layers)</div>
+
+  <div class="diagram-box">
+    <div class="diagram">
+<span class="label">SECURITY DEFENSE-IN-DEPTH</span>
+<span class="tier">══════════════════════════════════════════════</span>
+
+<span class="ok">LAYER 1: EDGE (ALB + WAF)</span>
+<span class="dim">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  ALB: TLS 1.3 (ELBSecurityPolicy-TLS13-1-2-2021-06)        <span class="dim">│</span>
+<span class="dim">│</span>  WAF: AWS-AWSManagedRulesCommonRuleSet                      <span class="dim">│</span>
+<span class="dim">│</span>       AWS-AWSManagedRulesKnownBadInputsRuleSet              <span class="dim">│</span>
+<span class="dim">│</span>       AWS-AWSManagedRulesSQLiRuleSet                        <span class="dim">│</span>
+<span class="dim">│</span>       RateLimit: 2000 requests/IP                           <span class="dim">│</span>
+<span class="dim">│</span>  HTTP 80 --> 301 HTTPS redirect (no plaintext)              <span class="dim">│</span>
+<span class="dim">└──────────────────────────────────────────────────────────────┘</span>
+
+<span class="ok">LAYER 2: NETWORK</span>
+<span class="dim">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  5 Security Groups (least-privilege per component)          <span class="dim">│</span>
+<span class="dim">│</span>  VPC Flow Logs (all traffic logged to CloudWatch)           <span class="dim">│</span>
+<span class="dim">│</span>  Private subnets for EKS ENIs (no public access)            <span class="dim">│</span>
+<span class="dim">│</span>  NetworkPolicy per K8s namespace (ingress isolation)         <span class="dim">│</span>
+<span class="dim">│</span>  On-prem: outbound HTTPS 443 only (no inbound)              <span class="dim">│</span>
+<span class="dim">└──────────────────────────────────────────────────────────────┘</span>
+
+<span class="ok">LAYER 3: IDENTITY & ACCESS</span>
+<span class="dim">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  Keycloak SSO (OIDC/SAML for all tools)                     <span class="dim">│</span>
+<span class="dim">│</span>  IAM Roles: EKS cluster, node, EC2 (least privilege)        <span class="dim">│</span>
+<span class="dim">│</span>  K8s RBAC: le-client-admin + le-argocd-deployer             <span class="dim">│</span>
+<span class="dim">│</span>  Pod Security Standards: baseline enforce, restricted warn   <span class="dim">│</span>
+<span class="dim">│</span>  Per-namespace RoleBindings (group-based)                    <span class="dim">│</span>
+<span class="dim">└──────────────────────────────────────────────────────────────┘</span>
+
+<span class="ok">LAYER 4: SECRETS</span>
+<span class="dim">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  Vault: Per-client paths (secret/le-{client}-prod/*)        <span class="dim">│</span>
+<span class="dim">│</span>  KMS: d514cb7e-6ce0-4d17-a42d-a0311ded34d0 (EKS secrets)   <span class="dim">│</span>
+<span class="dim">│</span>  EKS OIDC for pod IAM roles (IRSA)                          <span class="dim">│</span>
+<span class="dim">│</span>  SSH key: le-shared-k8s-key.pem (EC2 access)                <span class="dim">│</span>
+<span class="dim">└──────────────────────────────────────────────────────────────┘</span>
+
+<span class="ok">LAYER 5: WORKLOAD ISOLATION</span>
+<span class="dim">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  ResourceQuota: 4 CPU / 8Gi / 20 pods per prod NS           <span class="dim">│</span>
+<span class="dim">│</span>  LimitRange: default 500m/512Mi per container               <span class="dim">│</span>
+<span class="dim">│</span>  Node taints: client=name:NoSchedule (physical isolation)   <span class="dim">│</span>
+<span class="dim">│</span>  PriorityClasses: critical/high/normal                      <span class="dim">│</span>
+<span class="dim">│</span>  PDB: minAvailable=1 (HA guarantee)                         <span class="dim">│</span>
+<span class="dim">└──────────────────────────────────────────────────────────────┘</span>
+
+<span class="ok">LAYER 6: AUDIT & DETECTION</span>
+<span class="dim">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  GuardDuty: EKS audit + runtime monitoring                  <span class="dim">│</span>
+<span class="dim">│</span>  CloudTrail: Multi-region API audit (linkedeye-audit-trail) <span class="dim">│</span>
+<span class="dim">│</span>  EKS Logging: api, audit, auth, ctrlmgr, scheduler         <span class="dim">│</span>
+<span class="dim">│</span>  VPC Flow Logs: All traffic (fl-0118e55d4a7b3a88d)          <span class="dim">│</span>
+<span class="dim">│</span>  Harbor: Trivy vulnerability scanning                       <span class="dim">│</span>
+<span class="dim">└──────────────────────────────────────────────────────────────┘</span>
+</div>
+  </div>
+</div>
+
+<!-- ==================== FIREWALL RULES ==================== -->
+<div class="section" id="firewall">
+  <div class="section-title">6. FortiGate Firewall Rules (Per Client Site)</div>
+
+  <div class="warn-box">
+    <b>OUTBOUND ONLY - NO INBOUND PORTS REQUIRED</b><br>
+    All hybrid node traffic is initiated outbound from the client site over HTTPS 443.
+  </div>
+
+  <table>
+    <tr><th>#</th><th>Service</th><th>Destination IP</th><th>FQDN</th><th>Port</th><th>Purpose</th></tr>
+    <tr><td>1</td><td>EKS API</td><td><b>13.206.10.12</b></td><td>11CBD16DDC759507469188FB0FCB690D.gr7.ap-south-1.eks.amazonaws.com</td><td>443</td><td>K8s API (kubelet heartbeat)</td></tr>
+    <tr><td>2</td><td>EKS API (HA)</td><td><b>13.205.107.216</b></td><td>(same)</td><td>443</td><td>K8s API (failover)</td></tr>
+    <tr><td>3</td><td>SSM</td><td><b>13.200.93.131</b></td><td>ssm.ap-south-1.amazonaws.com</td><td>443</td><td>Node registration</td></tr>
+    <tr><td>4</td><td>SSM Messages</td><td><b>13.200.91.130</b></td><td>ssmmessages.ap-south-1.amazonaws.com</td><td>443</td><td>Remote management</td></tr>
+    <tr><td>5</td><td>EC2 Messages</td><td><b>13.200.90.177</b></td><td>ec2messages.ap-south-1.amazonaws.com</td><td>443</td><td>Instance messaging</td></tr>
+    <tr><td>6</td><td>STS (IAM)</td><td><b>13.200.93.41</b></td><td>sts.ap-south-1.amazonaws.com</td><td>443</td><td>Token refresh</td></tr>
+    <tr><td>7</td><td>ECR API</td><td><b>13.234.8.23</b></td><td>api.ecr.ap-south-1.amazonaws.com</td><td>443</td><td>Container registry</td></tr>
+    <tr><td>8</td><td>ECR Docker</td><td><b>13.232.222.26</b></td><td>654697417727.dkr.ecr.ap-south-1.amazonaws.com</td><td>443</td><td>Image pulls</td></tr>
+    <tr><td>9</td><td>S3</td><td><b>3.5.211.0/24</b></td><td>s3.ap-south-1.amazonaws.com</td><td>443</td><td>Image layers</td></tr>
+    <tr><td>10</td><td>S3</td><td><b>3.5.213.241</b></td><td>(same)</td><td>443</td><td>S3 endpoint</td></tr>
+  </table>
+
+  <div class="danger-box">
+    <b>WARNING:</b> AWS IPs can change. Use FQDN-based rules on FortiGate if supported. Re-verify IPs periodically with <code>dig +short &lt;fqdn&gt;</code>.
+  </div>
+</div>
+
+<!-- ==================== SERVER INVENTORY ==================== -->
+<div class="section" id="servers">
+  <div class="section-title">7. Complete Server Inventory</div>
+
+  <h3 style="color: #58a6ff; margin: 15px 0 10px;">AWS Resources</h3>
+  <table>
+    <tr><th>Resource</th><th>ID / Name</th><th>IP</th><th>Type</th></tr>
+    <tr><td>EC2-A (Jenkins)</td><td>i-0a9159a2543b2e9c3</td><td>15.206.123.199</td><td>m5.xlarge</td></tr>
+    <tr><td>EC2-B (Mgmt+ITSM)</td><td>i-03ed15e786ddd4340</td><td>15.206.80.24</td><td>m5.2xlarge</td></tr>
+    <tr><td>NAT GW AZ1</td><td>nat-05ecf9d90261115bd</td><td>15.207.153.110</td><td>-</td></tr>
+    <tr><td>NAT GW AZ2</td><td>nat-0a9efa6a8ac67df50</td><td>43.204.194.63</td><td>-</td></tr>
+    <tr><td>ALB</td><td>linkedeye-tools-alb</td><td>65.2.133.69 / 13.205.175.135</td><td>Application</td></tr>
+    <tr><td>EKS API</td><td>linkedeye-finspot-k8s-cluster</td><td>13.206.10.12 / 13.205.107.216</td><td>Managed</td></tr>
+  </table>
+
+  <h3 style="color: #58a6ff; margin: 20px 0 10px;">On-Prem Worker Nodes (Hybrid)</h3>
+  <table>
+    <tr><th>Hostname</th><th>Server IP</th><th>Environment</th><th>Client</th><th>Namespace</th></tr>
+    <tr><td>INDMONEY-MUMBAI_PROD</td><td>10.172.0.10</td><td style="color:#3fb950;">PROD</td><td>InDMoney</td><td>le-indmoney-prod</td></tr>
+    <tr><td>INDMONEY-BANGLORE_PROD</td><td>10.173.0.10</td><td style="color:#3fb950;">PROD</td><td>InDMoney</td><td>le-indmoney-prod</td></tr>
+    <tr><td>NEO-LE_PROD</td><td>10.40.1.10</td><td style="color:#3fb950;">PROD</td><td>Neo Wealth</td><td>le-neo-wealth-prod</td></tr>
+    <tr><td>DX-LE_PROD</td><td>10.10.10.110</td><td style="color:#3fb950;">PROD</td><td>DX</td><td>le-dx-prod</td></tr>
+    <tr><td>FTC-LE_PROD</td><td>202.87.54.194</td><td style="color:#3fb950;">PROD</td><td>Flattrade</td><td>le-ftc-prod</td></tr>
+    <tr><td>IFSC-LE_PROD</td><td>10.40.40.23</td><td style="color:#3fb950;">PROD</td><td>IFSC</td><td>le-ifsc-prod</td></tr>
+    <tr><td>DEV-LE_SERVER</td><td>172.16.0.65</td><td style="color:#58a6ff;">DEV</td><td>FinSpot</td><td>le-dev</td></tr>
+    <tr><td>DEV-LE_SERVER</td><td>172.16.0.75</td><td style="color:#58a6ff;">DEV</td><td>FinSpot</td><td>le-dev</td></tr>
+    <tr><td>UAT-LE_SERVER</td><td>172.20.1.80</td><td style="color:#d2a8ff;">UAT</td><td>FinSpot</td><td>le-uat</td></tr>
+    <tr><td>fs-uat-le-release-server</td><td>172.20.1.90</td><td style="color:#d2a8ff;">UAT</td><td>FinSpot</td><td>le-uat</td></tr>
+    <tr><td>fs-uat-jenkins</td><td>172.20.1.91</td><td>CI/CD</td><td>FinSpot</td><td>-</td></tr>
+    <tr><td>Jenkins Server</td><td>172.16.0.72</td><td>CI/CD</td><td>FinSpot</td><td>-</td></tr>
+  </table>
+</div>
+
+<!-- ==================== FOOTER ==================== -->
+<div style="text-align: center; padding: 40px; color: #484f58; font-size: 0.8em; border-top: 1px solid #21262d; margin-top: 30px;">
+  <b style="color: #58a6ff;">LinkedEye Enterprise Platform</b> | FinSpot Technology Solutions<br>
+  AWS Account: 654697417727 | Region: ap-south-1 (Mumbai)<br>
+  Generated: March 12, 2026 | Version 2.0 | Confidential<br>
+  <br>
+  <span style="color: #3fb950;">CTO:</span> Rajkumar Madhu (+91-917-677-2077) |
+  <span style="color: #3fb950;">Ops:</span> Hoysala Bise (+91-998-014-6101) |
+  <span style="color: #3fb950;">Network:</span> Siva K (+91-960-368-3828)
+</div>
+
+</div><!-- container -->
+</body>
+</html>

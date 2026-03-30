@@ -1,0 +1,39 @@
+# Jenkins Helm values for LinkedEye platform
+# Namespace: le-cicd
+# Install: helm install jenkins jenkins/jenkins -n le-cicd -f jenkins-values.yaml
+
+controller:
+  serviceType: NodePort
+  nodePort: 30081
+  admin:
+    password: LinkedEye@2026
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2
+      memory: 2Gi
+  installPlugins:
+    - kubernetes:latest
+    - workflow-aggregator:latest
+    - git:latest
+    - configuration-as-code:latest
+    - pipeline-stage-view:latest
+    - blueocean:latest
+  javaOpts: "-Xmx1g -Xms512m"
+
+persistence:
+  enabled: true
+  size: 20Gi
+  storageClass: local-path
+
+agent:
+  enabled: true
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1
+      memory: 512Mi
