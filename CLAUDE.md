@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repo deploys the **LinkedEye** shared ITSM/monitoring platform infrastructure on AWS for **FinSpot Technology Solutions** (account `654697417727`, region `ap-south-1`). Architecture:
 - **EKS** (`linkedeye-finspot-k8s-cluster`, v1.34) — AWS-managed control plane + managed node groups + on-prem hybrid workers per client site
-- **Node group `le-mgmt-tools-ng-v2`** (2x m5.xlarge) — All workloads: Jenkins, Harbor, ArgoCD, Keycloak, Vault, ITSM (labels: `role=mgmt-tools`, `jenkins=true`)
+- **Node group `le-mgmt-tools-ng-v3`** (2x m5.xlarge) — All workloads: Jenkins, Harbor, ArgoCD, Keycloak, Vault, ITSM (labels: `role=mgmt-tools`, `jenkins=true`)
 - **ALB** (`linkedeye-tools-alb`) — Routes tool and client FQDNs
 
 ## AWS CLI Location
@@ -68,7 +68,7 @@ Every script appends its resource IDs to `/tmp/le-network-ids.env` (created fres
 | NAT GW | — | Not deployed |
 | SSH Key | `~/.ssh/le-shared-k8s-key.pem` | Done |
 | EKS Cluster | `linkedeye-finspot-k8s-cluster` (v1.34, logging disabled) | Done |
-| EKS Node Group | `le-mgmt-tools-ng-v2` (2x m5.xlarge, AL2, nodes at v1.31) | Done* |
+| EKS Node Group | `le-mgmt-tools-ng-v3` (2x m5.xlarge, AL2023, K8s v1.34) | Done |
 | EKS Addons | vpc-cni, coredns, kube-proxy, ebs-csi, guardduty-agent | Done |
 | ALB | `linkedeye-tools-alb` (2 EIPs: 3.109.131.36, 43.205.77.93) | Done |
 | Security Groups | eks-cluster, eks-hybrid, jenkins-ec2, mgmt-ec2, alb, guardduty | Done |
@@ -95,14 +95,12 @@ VPC 10.15.0.0/16  (ap-south-1)
   Storage 10.15.20.0/24 (AZ1a) — reserved
   Storage 10.15.21.0/24 (AZ1b) — reserved
 
-EKS: linkedeye-finspot-k8s-cluster (Control plane K8s 1.34, logging disabled)
+EKS: linkedeye-finspot-k8s-cluster (K8s 1.34, logging disabled)
   Control plane: AWS-managed (public+private endpoint)
-  Node group: le-mgmt-tools-ng-v2 (2x m5.xlarge, AL2, nodes at v1.31*)
+  Node group: le-mgmt-tools-ng-v3 (2x m5.xlarge, AL2023, K8s v1.34)
     Labels: role=mgmt-tools, jenkins=true, project=linkedeye
   Hybrid workers: On-prem per client site (SSM Hybrid Activation, public EKS API)
   Each client node labeled: client=<name>
-
-* Node group needs AL2023 AMI to upgrade from v1.31 → v1.34 (AL2 supports ≤1.32 only)
 
 ALB: linkedeye-tools-alb → EKS node groups
 ```
@@ -110,7 +108,7 @@ ALB: linkedeye-tools-alb → EKS node groups
 ## Key Configuration
 
 - **AMI:** `ami-0f58b397bc5c1f2e8` (Ubuntu 22.04 LTS, ap-south-1)
-- **EKS:** Control plane v1.34, single node group `le-mgmt-tools-ng-v2` (2x m5.xlarge, nodes at v1.31 — AL2 AMI); to upgrade nodes to v1.34, create new node group with AL2023 AMI type
+- **EKS:** v1.34, single node group `le-mgmt-tools-ng-v3` (2x m5.xlarge, AL2023, K8s v1.34)
 - **SSH key:** `~/.ssh/le-shared-k8s-key.pem`
 - **Management tools:** Running as pods on EKS node groups (not standalone EC2s)
 - **VPN:** Set `FORTIGATE_PUBLIC_IP` in `.env.shared` then run `01-network/04-create-vpn.sh`
