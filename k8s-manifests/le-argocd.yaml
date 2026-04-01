@@ -1,0 +1,767 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "6"
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"argocd-redis","project":"linkedeye"},"name":"argocd-redis","namespace":"le-argocd"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"argocd-redis"}},"template":{"metadata":{"labels":{"app":"argocd-redis","project":"linkedeye"}},"spec":{"containers":[{"args":["--save","","--appendonly","no"],"image":"redis:7-alpine","livenessProbe":{"exec":{"command":["redis-cli","ping"]},"initialDelaySeconds":15,"periodSeconds":10},"name":"redis","ports":[{"containerPort":6379}],"readinessProbe":{"exec":{"command":["redis-cli","ping"]},"initialDelaySeconds":5,"periodSeconds":5},"resources":{"limits":{"cpu":"500m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}}],"nodeSelector":{"role":"mgmt-tools"},"securityContext":{"runAsNonRoot":true,"runAsUser":999}}}}}
+    labels:
+      app: argocd-redis
+      project: linkedeye
+    name: argocd-redis
+    namespace: le-argocd
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: argocd-redis
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-03-17T19:47:15+01:00"
+        labels:
+          app: argocd-redis
+          project: linkedeye
+      spec:
+        containers:
+        - args:
+          - --save
+          - ""
+          - --appendonly
+          - "no"
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            exec:
+              command:
+              - redis-cli
+              - ping
+            failureThreshold: 3
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: redis
+          ports:
+          - containerPort: 6379
+            protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+              - redis-cli
+              - ping
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          role: mgmt-tools
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 999
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-03-17T05:31:47Z"
+      lastUpdateTime: "2026-03-17T18:47:25Z"
+      message: ReplicaSet "argocd-redis-576d85b475" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2026-03-30T07:00:31Z"
+      lastUpdateTime: "2026-03-30T07:00:31Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 13
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "6"
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"argocd-repo-server","project":"linkedeye"},"name":"argocd-repo-server","namespace":"le-argocd"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"argocd-repo-server"}},"template":{"metadata":{"labels":{"app":"argocd-repo-server","project":"linkedeye"}},"spec":{"automountServiceAccountToken":false,"containers":[{"command":["argocd-repo-server"],"env":[{"name":"REDIS_SERVER_ADDRESS","value":"argocd-redis:6379"},{"name":"ARGOCD_RECONCILIATION_TIMEOUT","value":"180s"}],"image":"quay.io/argoproj/argocd:v2.10.0","livenessProbe":{"initialDelaySeconds":30,"periodSeconds":10,"tcpSocket":{"port":8081}},"name":"argocd-repo-server","ports":[{"containerPort":8081},{"containerPort":8084}],"readinessProbe":{"initialDelaySeconds":10,"periodSeconds":10,"tcpSocket":{"port":8081}},"resources":{"limits":{"cpu":"1000m","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/app/config/ssh","name":"ssh-known-hosts"},{"mountPath":"/app/config/tls","name":"tls-certs"},{"mountPath":"/tmp","name":"tmp"}]}],"nodeSelector":{"role":"mgmt-tools"},"serviceAccountName":"argocd-repo-server","volumes":[{"configMap":{"name":"argocd-ssh-known-hosts-cm","optional":true},"name":"ssh-known-hosts"},{"configMap":{"name":"argocd-tls-certs-cm","optional":true},"name":"tls-certs"},{"emptyDir":{},"name":"tmp"}]}}}}
+    labels:
+      app: argocd-repo-server
+      project: linkedeye
+    name: argocd-repo-server
+    namespace: le-argocd
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: argocd-repo-server
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-03-17T19:47:15+01:00"
+        labels:
+          app: argocd-repo-server
+          project: linkedeye
+      spec:
+        automountServiceAccountToken: false
+        containers:
+        - command:
+          - argocd-repo-server
+          env:
+          - name: REDIS_SERVER_ADDRESS
+            value: argocd-redis:6379
+          - name: ARGOCD_RECONCILIATION_TIMEOUT
+            value: 180s
+          image: quay.io/argoproj/argocd:v2.10.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 8081
+            timeoutSeconds: 1
+          name: argocd-repo-server
+          ports:
+          - containerPort: 8081
+            protocol: TCP
+          - containerPort: 8084
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 8081
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/config/ssh
+            name: ssh-known-hosts
+          - mountPath: /app/config/tls
+            name: tls-certs
+          - mountPath: /tmp
+            name: tmp
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          role: mgmt-tools
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: argocd-repo-server
+        serviceAccountName: argocd-repo-server
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: argocd-ssh-known-hosts-cm
+            optional: true
+          name: ssh-known-hosts
+        - configMap:
+            defaultMode: 420
+            name: argocd-tls-certs-cm
+            optional: true
+          name: tls-certs
+        - emptyDir: {}
+          name: tmp
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-03-17T05:31:50Z"
+      lastUpdateTime: "2026-03-17T18:47:35Z"
+      message: ReplicaSet "argocd-repo-server-7f76cc5dd4" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2026-03-30T07:00:37Z"
+      lastUpdateTime: "2026-03-30T07:00:37Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 13
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "13"
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"argocd-server","project":"linkedeye"},"name":"argocd-server","namespace":"le-argocd"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"argocd-server"}},"template":{"metadata":{"labels":{"app":"argocd-server","project":"linkedeye"}},"spec":{"containers":[{"args":["--insecure","--repo-server=argocd-repo-server:8081","--redis=argocd-redis:6379","--staticassets=/shared/app","--loglevel=info"],"command":["argocd-server"],"env":[{"name":"ARGOCD_SERVER_INSECURE","value":"true"},{"name":"ARGOCD_SERVER_BASEHREF","value":"/"},{"name":"KUBERNETES_SERVICE_HOST","value":"11CBD16DDC759507469188FB0FCB690D.gr7.ap-south-1.eks.amazonaws.com"},{"name":"KUBERNETES_SERVICE_PORT","value":"443"}],"image":"quay.io/argoproj/argocd:v2.10.0","livenessProbe":{"failureThreshold":3,"httpGet":{"path":"/healthz?full=true","port":8080},"initialDelaySeconds":60,"periodSeconds":30},"name":"argocd-server","ports":[{"containerPort":8080,"name":"http"},{"containerPort":8083,"name":"grpc"},{"containerPort":8085,"name":"metrics"}],"readinessProbe":{"httpGet":{"path":"/healthz","port":8080},"initialDelaySeconds":30,"periodSeconds":10},"resources":{"limits":{"cpu":"1000m","memory":"512Mi"},"requests":{"cpu":"250m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/app/config/ssh","name":"ssh-known-hosts"},{"mountPath":"/app/config/tls","name":"tls-certs"},{"mountPath":"/home/argocd","name":"plugins-home"}]}],"nodeSelector":{"role":"mgmt-tools"},"serviceAccountName":"argocd-server","volumes":[{"configMap":{"name":"argocd-ssh-known-hosts-cm","optional":true},"name":"ssh-known-hosts"},{"configMap":{"name":"argocd-tls-certs-cm","optional":true},"name":"tls-certs"},{"emptyDir":{},"name":"plugins-home"}]}}}}
+    labels:
+      app: argocd-server
+      project: linkedeye
+    name: argocd-server
+    namespace: le-argocd
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: argocd-server
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-04-01T06:04:28Z"
+        labels:
+          app: argocd-server
+          project: linkedeye
+      spec:
+        containers:
+        - args:
+          - --insecure
+          - --repo-server=argocd-repo-server:8081
+          - --redis=argocd-redis:6379
+          - --staticassets=/shared/app
+          - --loglevel=info
+          command:
+          - argocd-server
+          env:
+          - name: ARGOCD_SERVER_INSECURE
+            value: "true"
+          - name: ARGOCD_SERVER_BASEHREF
+            value: /
+          - name: KUBERNETES_SERVICE_HOST
+            value: 11CBD16DDC759507469188FB0FCB690D.gr7.ap-south-1.eks.amazonaws.com
+          - name: KUBERNETES_SERVICE_PORT
+            value: "443"
+          image: quay.io/argoproj/argocd:v2.10.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz?full=true
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: argocd-server
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          - containerPort: 8083
+            name: grpc
+            protocol: TCP
+          - containerPort: 8085
+            name: metrics
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/config/ssh
+            name: ssh-known-hosts
+          - mountPath: /app/config/tls
+            name: tls-certs
+          - mountPath: /home/argocd
+            name: plugins-home
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          role: mgmt-tools
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: argocd-server
+        serviceAccountName: argocd-server
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: argocd-ssh-known-hosts-cm
+            optional: true
+          name: ssh-known-hosts
+        - configMap:
+            defaultMode: 420
+            name: argocd-tls-certs-cm
+            optional: true
+          name: tls-certs
+        - emptyDir: {}
+          name: plugins-home
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-03-30T07:00:58Z"
+      lastUpdateTime: "2026-03-30T07:00:58Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-03-19T06:04:59Z"
+      lastUpdateTime: "2026-04-01T06:05:31Z"
+      message: ReplicaSet "argocd-server-5b4676dd9" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 20
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    annotations:
+        {"apiVersion":"apps/v1","kind":"StatefulSet","metadata":{"annotations":{},"labels":{"app":"argocd-application-controller","project":"linkedeye"},"name":"argocd-application-controller","namespace":"le-argocd"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"argocd-application-controller"}},"serviceName":"argocd-application-controller","template":{"metadata":{"labels":{"app":"argocd-application-controller","project":"linkedeye"}},"spec":{"containers":[{"args":["--status-processors=20","--operation-processors=10","--self-heal-timeout-seconds=5","--repo-server=argocd-repo-server:8081","--redis=argocd-redis:6379"],"command":["argocd-application-controller"],"env":[{"name":"ARGOCD_CONTROLLER_REPLICAS","value":"1"},{"name":"KUBERNETES_SERVICE_HOST","value":"11CBD16DDC759507469188FB0FCB690D.gr7.ap-south-1.eks.amazonaws.com"},{"name":"KUBERNETES_SERVICE_PORT","value":"443"}],"image":"quay.io/argoproj/argocd:v2.10.0","livenessProbe":{"httpGet":{"path":"/healthz","port":8082},"initialDelaySeconds":60,"periodSeconds":10},"name":"argocd-application-controller","ports":[{"containerPort":8082}],"readinessProbe":{"httpGet":{"path":"/healthz","port":8082},"initialDelaySeconds":30,"periodSeconds":10},"resources":{"limits":{"cpu":"2000m","memory":"2Gi"},"requests":{"cpu":"250m","memory":"512Mi"}}}],"nodeSelector":{"role":"mgmt-tools"},"serviceAccountName":"argocd-application-controller"}}}}
+    labels:
+      app: argocd-application-controller
+      project: linkedeye
+    name: argocd-application-controller
+    namespace: le-argocd
+  spec:
+    persistentVolumeClaimRetentionPolicy:
+      whenDeleted: Retain
+      whenScaled: Retain
+    podManagementPolicy: OrderedReady
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: argocd-application-controller
+    serviceName: argocd-application-controller
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-03-19T05:32:15+01:00"
+        labels:
+          app: argocd-application-controller
+          project: linkedeye
+      spec:
+        containers:
+        - args:
+          - --status-processors=20
+          - --operation-processors=10
+          - --self-heal-timeout-seconds=5
+          - --repo-server=argocd-repo-server:8081
+          - --redis=argocd-redis:6379
+          command:
+          - argocd-application-controller
+          env:
+          - name: ARGOCD_CONTROLLER_REPLICAS
+            value: "1"
+          - name: KUBERNETES_SERVICE_HOST
+            value: 11CBD16DDC759507469188FB0FCB690D.gr7.ap-south-1.eks.amazonaws.com
+          - name: KUBERNETES_SERVICE_PORT
+            value: "443"
+          image: quay.io/argoproj/argocd:v2.10.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 8082
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: argocd-application-controller
+          ports:
+          - containerPort: 8082
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 8082
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
+            requests:
+              cpu: 250m
+              memory: 512Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          role: mgmt-tools
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: argocd-application-controller
+        serviceAccountName: argocd-application-controller
+        terminationGracePeriodSeconds: 30
+    updateStrategy:
+      rollingUpdate:
+        partition: 0
+      type: RollingUpdate
+  status:
+    availableReplicas: 1
+    collisionCount: 0
+    currentReplicas: 1
+    currentRevision: argocd-application-controller-7bd8ccb8db
+    observedGeneration: 18
+    readyReplicas: 1
+    replicas: 1
+    updateRevision: argocd-application-controller-7bd8ccb8db
+    updatedReplicas: 1
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"argocd-application-controller","project":"linkedeye"},"name":"argocd-application-controller","namespace":"le-argocd"},"spec":{"ports":[{"name":"metrics","port":8082,"targetPort":8082}],"selector":{"app":"argocd-application-controller"},"type":"ClusterIP"}}
+    labels:
+      app: argocd-application-controller
+      project: linkedeye
+    name: argocd-application-controller
+    namespace: le-argocd
+  spec:
+    clusterIP: 172.20.62.112
+    clusterIPs:
+    - 172.20.62.112
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: metrics
+      port: 8082
+      protocol: TCP
+      targetPort: 8082
+    selector:
+      app: argocd-application-controller
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"argocd-redis","project":"linkedeye"},"name":"argocd-redis","namespace":"le-argocd"},"spec":{"ports":[{"port":6379,"targetPort":6379}],"selector":{"app":"argocd-redis"},"type":"ClusterIP"}}
+    labels:
+      app: argocd-redis
+      project: linkedeye
+    name: argocd-redis
+    namespace: le-argocd
+  spec:
+    clusterIP: 172.20.177.154
+    clusterIPs:
+    - 172.20.177.154
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - port: 6379
+      protocol: TCP
+      targetPort: 6379
+    selector:
+      app: argocd-redis
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"argocd-repo-server","project":"linkedeye"},"name":"argocd-repo-server","namespace":"le-argocd"},"spec":{"ports":[{"name":"server","port":8081,"targetPort":8081},{"name":"metrics","port":8084,"targetPort":8084}],"selector":{"app":"argocd-repo-server"},"type":"ClusterIP"}}
+    labels:
+      app: argocd-repo-server
+      project: linkedeye
+    name: argocd-repo-server
+    namespace: le-argocd
+  spec:
+    clusterIP: 172.20.74.65
+    clusterIPs:
+    - 172.20.74.65
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: server
+      port: 8081
+      protocol: TCP
+      targetPort: 8081
+    - name: metrics
+      port: 8084
+      protocol: TCP
+      targetPort: 8084
+    selector:
+      app: argocd-repo-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"argocd-server","project":"linkedeye"},"name":"argocd-server","namespace":"le-argocd"},"spec":{"ports":[{"name":"http","nodePort":30082,"port":8080,"targetPort":8080},{"name":"grpc","port":8083,"targetPort":8083}],"selector":{"app":"argocd-server"},"type":"NodePort"}}
+    labels:
+      app: argocd-server
+      project: linkedeye
+    name: argocd-server
+    namespace: le-argocd
+  spec:
+    clusterIP: 172.20.183.28
+    clusterIPs:
+    - 172.20.183.28
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      nodePort: 30082
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    - name: grpc
+      nodePort: 32640
+      port: 8083
+      protocol: TCP
+      targetPort: 8083
+    selector:
+      app: argocd-server
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  data:
+    application.resourceTrackingMethod: annotation
+    exec.enabled: "false"
+    oidc.config: |
+      name: Keycloak
+      issuer: https://le-keycloak.finspot.in/realms/linkedeye
+      clientID: argocd
+      clientSecret: $oidc.keycloak.clientSecret
+      requestedScopes:
+        - openid
+        - profile
+        - email
+        - groups
+      requestedIDTokenClaims:
+        groups:
+          essential: true
+    redis.server: 172.20.177.154:6379
+    repo.server: 172.20.74.65:8081
+    repositories: |
+      - url: https://le-harbor.finspot.in
+        type: helm
+        name: linkedeye-harbor
+    resource.customizations: ""
+    statusbadge.enabled: "true"
+    url: https://le-argocd.finspot.in
+  kind: ConfigMap
+  metadata:
+    annotations:
+        {"apiVersion":"v1","data":{"application.resourceTrackingMethod":"annotation","exec.enabled":"false","oidc.config":"name: Keycloak\nissuer: https://le-keycloak.finspot.in/realms/linkedeye\nclientID: argocd\nclientSecret: $oidc.keycloak.clientSecret\nrequestedScopes:\n  - openid\n  - profile\n  - email\n  - groups\nrequestedIDTokenClaims:\n  groups:\n    essential: true\n","repositories":"- url: https://le-harbor.finspot.in\n  type: helm\n  name: linkedeye-harbor\n","resource.customizations":"","statusbadge.enabled":"true","url":"https://le-argocd.finspot.in"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"argocd","project":"linkedeye"},"name":"argocd-cm","namespace":"le-argocd"}}
+    labels:
+      app: argocd
+      app.kubernetes.io/part-of: argocd
+      project: linkedeye
+    name: argocd-cm
+    namespace: le-argocd
+- apiVersion: v1
+  data:
+    policy.csv: |
+      # Admins — full access
+      p, role:admin, applications, *, */*, allow
+      p, role:admin, clusters, *, *, allow
+      p, role:admin, repositories, *, *, allow
+      p, role:admin, accounts, *, *, allow
+      p, role:admin, gpgkeys, *, *, allow
+      p, role:admin, logs, *, */*, allow
+
+      # Developers — can sync but not delete clusters
+      p, role:developer, applications, get, */*, allow
+      p, role:developer, applications, sync, */*, allow
+      p, role:developer, applications, update, */*, allow
+      p, role:developer, logs, get, */*, allow
+      p, role:developer, repositories, get, *, allow
+
+      # Read only
+      p, role:readonly, applications, get, */*, allow
+      p, role:readonly, logs, get, */*, allow
+
+      # Group mappings (from Keycloak)
+      g, linkedeye:admin, role:admin
+      g, linkedeye:developer, role:developer
+      g, linkedeye:viewer, role:readonly
+    policy.default: role:readonly
+    scopes: '[groups, email]'
+  kind: ConfigMap
+  metadata:
+    annotations:
+        {"apiVersion":"v1","data":{"policy.csv":"# Admins — full access\np, role:admin, applications, *, */*, allow\np, role:admin, clusters, *, *, allow\np, role:admin, repositories, *, *, allow\np, role:admin, accounts, *, *, allow\np, role:admin, gpgkeys, *, *, allow\np, role:admin, logs, *, */*, allow\n\n# Developers — can sync but not delete clusters\np, role:developer, applications, get, */*, allow\np, role:developer, applications, sync, */*, allow\np, role:developer, applications, update, */*, allow\np, role:developer, logs, get, */*, allow\np, role:developer, repositories, get, *, allow\n\n# Read only\np, role:readonly, applications, get, */*, allow\np, role:readonly, logs, get, */*, allow\n\n# Group mappings (from Keycloak)\ng, linkedeye:admin, role:admin\ng, linkedeye:developer, role:developer\ng, linkedeye:viewer, role:readonly\n","policy.default":"role:readonly","scopes":"[groups, email]"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"argocd","project":"linkedeye"},"name":"argocd-rbac-cm","namespace":"le-argocd"}}
+    labels:
+      app: argocd
+      app.kubernetes.io/part-of: argocd
+      project: linkedeye
+    name: argocd-rbac-cm
+    namespace: le-argocd
+- apiVersion: v1
+  data:
+    ca.crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIDBTCCAe2gAwIBAgIIaD2eUcmw3GgwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjAzMTIwNjAxMDlaFw0zNjAzMDkwNjA2MDlaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDDzLiZviLx2bjEzapbQAc9qeWFu3t7ySX0NQw1oCwjoWbGSlG4207m6EFw
+      QuHEsLFg5404hSRh8FATiqvg6mlW1Fvmpknu7YFmJuVVbxpC4/5F2hd69ON1uZ4M
+      wWH0omBRTDfAs0iZ9j3+BOKt9CCVyGaN0gcasndAxize4E3BDsxMeG/X/NHNJfL1
+      9oFAFo6BIPyK6FUQM3AwYQSDgSnj5a3ksp1DTZNiVwnojn3/KjUBy72vvpdtkTOU
+      Jfu/imIkUhgWZ1fyFPLXAHGjA7B907PYCEstBOXRLqWkTCh7Ov6OBHgvrE5dcE/a
+      Bsh2OXDL+vk529sFjKVqyBHYc9GbAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTYXgh9iJwWhjnyuKzAP5Qttv+OKDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQCCrekj586a
+      nQT9XxXhiCl7nmjyOvSWMic5ChJg4n77Ry0GHF7crsjSPA9V2tgGm6+C27/aiwf9
+      rS9DWsNvsn9EHpZEQKOGFso90L32cXlo8c9YmEg2lEuZkA2hL69WchZ6aoQLyV68
+      38qiKOlgeBlNo3p4qMb7LGdvXLhYAKrHi8cpCT/H8b4PAlXsYZfEqPKAzrU0jTeq
+      Ug8UTHnLYJ7N/HAMHsprAEn5/UzP6x3BuZD20DyHrUNkdU7s9BjgtcleQmHK715R
+      JQzwx8zOUEBKfchONnreEuuMH17m8qJqVPsl6c2DC1Azi7tRFGJTQOYNBAXqiEzp
+      s+x6YEsT5iPc
+      -----END CERTIFICATE-----
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubernetes.io/description: Contains a CA bundle that can be used to verify the
+        kube-apiserver when using internal endpoints such as the internal service
+        IP or kubernetes.default.svc. No other usage is guaranteed across distributions
+        of Kubernetes clusters.
+    name: kube-root-ca.crt
+    namespace: le-argocd
+- apiVersion: v1
+  data:
+    admin.password: JDJhJDEyJHVQQU1xUFFEOGFvdGgxRG50UU5LRy45T0hyenJWWlllLkMxQVkzeVNVSzFZbVBKUUZOdi5D
+    admin.passwordMtime: MjAyNi0wNC0wMVQwNjowNDoyNFo=
+    oidc.keycloak.clientSecret: Y2hhbmdlbWUtZ2V0LWZyb20ta2V5Y2xvYWs=
+    server.secretkey: YXJnb2NkLWxpbmtlZGV5ZS1zZWNyZXQta2V5LWNoYW5nZS10aGlz
+  kind: Secret
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"labels":{"app":"argocd","project":"linkedeye"},"name":"argocd-secret","namespace":"le-argocd"},"stringData":{"admin.password":"$2a$10$rRyBsGAAe/a1bKSS6fFNdusRTMbFe1WnFAqbDpFQZBPqWuB7GJVKG","admin.passwordMtime":"2025-01-01T00:00:00Z","oidc.keycloak.clientSecret":"changeme-get-from-keycloak","server.secretkey":"argocd-linkedeye-secret-key-change-this"},"type":"Opaque"}
+    labels:
+      app: argocd
+      app.kubernetes.io/part-of: argocd
+      project: linkedeye
+    name: argocd-secret
+    namespace: le-argocd
+  type: Opaque
+- apiVersion: v1
+  data:
+    POSTGRES_DB: YXJnb2NkZGI=
+    POSTGRES_HOST: MTcyLjIwLjY3LjE0
+    POSTGRES_PASSWORD: QXJnb2NkRmluU3BvdDIwMjU=
+    POSTGRES_PORT: NTQzMg==
+    POSTGRES_USER: YXJnb2Nk
+  kind: Secret
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"labels":{"app":"argocd","project":"linkedeye"},"name":"le-argocd-db-secret","namespace":"le-argocd"},"stringData":{"POSTGRES_DB":"argocddb","POSTGRES_HOST":"172.20.67.14","POSTGRES_PASSWORD":"ArgocdFinSpot2025","POSTGRES_PORT":"5432","POSTGRES_USER":"argocd"},"type":"Opaque"}
+    labels:
+      app: argocd
+      project: linkedeye
+    name: le-argocd-db-secret
+    namespace: le-argocd
+  type: Opaque
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"ServiceAccount","metadata":{"annotations":{},"labels":{"app":"argocd-application-controller","project":"linkedeye"},"name":"argocd-application-controller","namespace":"le-argocd"}}
+    labels:
+      app: argocd-application-controller
+      project: linkedeye
+    name: argocd-application-controller
+    namespace: le-argocd
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"ServiceAccount","metadata":{"annotations":{},"labels":{"app":"argocd-repo-server","project":"linkedeye"},"name":"argocd-repo-server","namespace":"le-argocd"}}
+    labels:
+      app: argocd-repo-server
+      project: linkedeye
+    name: argocd-repo-server
+    namespace: le-argocd
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"ServiceAccount","metadata":{"annotations":{},"labels":{"app":"argocd-server","project":"linkedeye"},"name":"argocd-server","namespace":"le-argocd"}}
+    labels:
+      app: argocd-server
+      project: linkedeye
+    name: argocd-server
+    namespace: le-argocd
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: default
+    namespace: le-argocd
+kind: List
+metadata:

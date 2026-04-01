@@ -1,0 +1,569 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "8"
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"jenkins","project":"linkedeye","version":"lts"},"name":"jenkins","namespace":"le-jenkins"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"jenkins"}},"strategy":{"type":"Recreate"},"template":{"metadata":{"labels":{"app":"jenkins","project":"linkedeye"}},"spec":{"containers":[{"env":[{"name":"CASC_JENKINS_CONFIG","value":"/var/jenkins_casc/jenkins.yaml"},{"name":"JAVA_OPTS","value":"-Djenkins.install.runSetupWizard=false -Dhudson.model.DirectoryBrowserSupport.CSP= -Xmx2048m -Xms512m"},{"name":"POSTGRES_HOST","valueFrom":{"secretKeyRef":{"key":"POSTGRES_HOST","name":"le-jenkins-db-secret"}}},{"name":"POSTGRES_PORT","valueFrom":{"secretKeyRef":{"key":"POSTGRES_PORT","name":"le-jenkins-db-secret"}}},{"name":"POSTGRES_DB","valueFrom":{"secretKeyRef":{"key":"POSTGRES_DB","name":"le-jenkins-db-secret"}}},{"name":"POSTGRES_USER","valueFrom":{"secretKeyRef":{"key":"POSTGRES_USER","name":"le-jenkins-db-secret"}}},{"name":"POSTGRES_PASSWORD","valueFrom":{"secretKeyRef":{"key":"POSTGRES_PASSWORD","name":"le-jenkins-db-secret"}}},{"name":"JENKINS_ADMIN_PASSWORD","valueFrom":{"secretKeyRef":{"key":"JENKINS_ADMIN_PASSWORD","name":"jenkins-secrets"}}},{"name":"JENKINS_USER_PASSWORD","valueFrom":{"secretKeyRef":{"key":"JENKINS_USER_PASSWORD","name":"jenkins-secrets"}}},{"name":"HARBOR_ADMIN_PASSWORD","valueFrom":{"secretKeyRef":{"key":"HARBOR_ADMIN_PASSWORD","name":"jenkins-secrets"}}},{"name":"ARGOCD_AUTH_TOKEN","valueFrom":{"secretKeyRef":{"key":"ARGOCD_AUTH_TOKEN","name":"jenkins-secrets"}}}],"image":"jenkins/jenkins:lts-jdk21","livenessProbe":{"failureThreshold":5,"httpGet":{"path":"/login","port":8080},"initialDelaySeconds":90,"periodSeconds":20,"timeoutSeconds":10},"name":"jenkins","ports":[{"containerPort":8080,"name":"http"},{"containerPort":50000,"name":"agent"}],"readinessProbe":{"failureThreshold":5,"httpGet":{"path":"/login","port":8080},"initialDelaySeconds":60,"periodSeconds":10,"timeoutSeconds":10},"resources":{"limits":{"cpu":"2000m","memory":"3Gi"},"requests":{"cpu":"500m","memory":"1Gi"}},"volumeMounts":[{"mountPath":"/var/jenkins_home","name":"jenkins-home"},{"mountPath":"/var/jenkins_casc","name":"jenkins-casc","readOnly":true}]}],"initContainers":[{"command":["sh","-c","echo \"Waiting for PostgreSQL...\"\nuntil nc -z 172.20.67.14 5432; do\n  echo \"PostgreSQL not ready — retrying in 3s\"\n  sleep 3\ndone\necho \"PostgreSQL is ready.\"\n"],"image":"busybox:1.35","name":"wait-for-postgres"},{"command":["sh","-c","chown -R 1000:1000 /var/jenkins_home"],"image":"busybox:1.35","name":"fix-permissions","securityContext":{"runAsUser":0},"volumeMounts":[{"mountPath":"/var/jenkins_home","name":"jenkins-home"}]}],"nodeSelector":{"role":"jenkins"},"securityContext":{"fsGroup":1000,"runAsUser":1000},"serviceAccountName":"jenkins","volumes":[{"name":"jenkins-home","persistentVolumeClaim":{"claimName":"jenkins-pvc"}},{"configMap":{"name":"jenkins-casc-config"},"name":"jenkins-casc"}]}}}}
+    labels:
+      app: jenkins
+      project: linkedeye
+      version: lts
+    name: jenkins
+    namespace: le-jenkins
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: jenkins
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        annotations:
+          backup.velero.io/backup-volumes: jenkins-home
+          backup.velero.io/backup-volumes-excludes: ""
+        labels:
+          app: jenkins
+          project: linkedeye
+      spec:
+        containers:
+        - env:
+          - name: CASC_JENKINS_CONFIG
+            value: /var/jenkins_casc/jenkins.yaml
+          - name: JAVA_OPTS
+            value: -Djenkins.install.runSetupWizard=false -Dhudson.model.DirectoryBrowserSupport.CSP=
+              -Xmx2048m -Xms512m -Djenkins.model.Jenkins.crumbIssuerProxyCompatibility=true
+              -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true -Dorg.jenkinsci.plugins.sshd.SSHD.fixHostKeysDuringInit=true
+          - name: POSTGRES_HOST
+            valueFrom:
+              secretKeyRef:
+                key: POSTGRES_HOST
+                name: le-jenkins-db-secret
+          - name: POSTGRES_PORT
+            valueFrom:
+              secretKeyRef:
+                key: POSTGRES_PORT
+                name: le-jenkins-db-secret
+          - name: POSTGRES_DB
+            valueFrom:
+              secretKeyRef:
+                key: POSTGRES_DB
+                name: le-jenkins-db-secret
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                key: POSTGRES_USER
+                name: le-jenkins-db-secret
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: POSTGRES_PASSWORD
+                name: le-jenkins-db-secret
+          - name: JENKINS_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: JENKINS_ADMIN_PASSWORD
+                name: jenkins-secrets
+          - name: JENKINS_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: JENKINS_USER_PASSWORD
+                name: jenkins-secrets
+          - name: HARBOR_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: HARBOR_ADMIN_PASSWORD
+                name: jenkins-secrets
+          - name: ARGOCD_AUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: ARGOCD_AUTH_TOKEN
+                name: jenkins-secrets
+          image: jenkins/jenkins:lts-jdk21
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /login
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 90
+            periodSeconds: 20
+            successThreshold: 1
+            timeoutSeconds: 10
+          name: jenkins
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          - containerPort: 50000
+            name: agent
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /login
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          resources:
+            limits:
+              cpu: "2"
+              memory: 3Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /var/jenkins_home
+            name: jenkins-home
+          - mountPath: /var/jenkins_casc
+            name: jenkins-casc
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        initContainers:
+        - command:
+          - sh
+          - -c
+          - |
+            echo "Waiting for PostgreSQL..."
+            until nc -z 172.20.67.14 5432; do
+              echo "PostgreSQL not ready — retrying in 3s"
+              sleep 3
+            done
+            echo "PostgreSQL is ready."
+          image: busybox:1.35
+          imagePullPolicy: IfNotPresent
+          name: wait-for-postgres
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        - command:
+          - sh
+          - -c
+          - chown -R 1000:1000 /var/jenkins_home
+          image: busybox:1.35
+          imagePullPolicy: IfNotPresent
+          name: fix-permissions
+          resources: {}
+          securityContext:
+            runAsUser: 0
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /var/jenkins_home
+            name: jenkins-home
+        nodeSelector:
+          jenkins: "true"
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsUser: 1000
+        serviceAccount: jenkins
+        serviceAccountName: jenkins
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: jenkins-home
+          persistentVolumeClaim:
+            claimName: jenkins-pvc
+        - configMap:
+            defaultMode: 420
+            name: jenkins-casc-config
+          name: jenkins-casc
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-04-01T20:09:43Z"
+      lastUpdateTime: "2026-04-01T20:09:43Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-03-19T10:53:50Z"
+      lastUpdateTime: "2026-04-01T20:09:43Z"
+      message: ReplicaSet "jenkins-5466785df" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 12
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"jenkins","project":"linkedeye"},"name":"jenkins-agent-svc","namespace":"le-jenkins"},"spec":{"ports":[{"name":"agent","port":50000,"targetPort":50000}],"selector":{"app":"jenkins"},"type":"NodePort"}}
+    labels:
+      app: jenkins
+      project: linkedeye
+    name: jenkins-agent-svc
+    namespace: le-jenkins
+  spec:
+    clusterIP: 172.20.235.100
+    clusterIPs:
+    - 172.20.235.100
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: agent
+      nodePort: 31291
+      port: 50000
+      protocol: TCP
+      targetPort: 50000
+    selector:
+      app: jenkins
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      alb.ingress.kubernetes.io/healthcheck-path: /login
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{"alb.ingress.kubernetes.io/healthcheck-path":"/login"},"labels":{"app":"jenkins","project":"linkedeye"},"name":"jenkins-svc","namespace":"le-jenkins"},"spec":{"ports":[{"name":"http","nodePort":30080,"port":8080,"targetPort":8080}],"selector":{"app":"jenkins"},"type":"NodePort"}}
+    labels:
+      app: jenkins
+      project: linkedeye
+    name: jenkins-svc
+    namespace: le-jenkins
+  spec:
+    clusterIP: 172.20.102.105
+    clusterIPs:
+    - 172.20.102.105
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      nodePort: 30080
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: jenkins
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  data:
+    jenkins.yaml: |
+      jenkins:
+        systemMessage: "LinkedEye CI/CD — FinSpot Technology Solutions"
+        numExecutors: 0
+        mode: EXCLUSIVE
+        scmCheckoutRetryCount: 3
+
+        securityRealm:
+          local:
+            allowsSignup: false
+            users:
+              - id: "admin"
+                password: "${JENKINS_ADMIN_PASSWORD}"
+              - id: "rajkumar"
+                password: "${JENKINS_USER_PASSWORD}"
+
+        authorizationStrategy:
+          roleBased:
+            roles:
+              global:
+                - name: "admin"
+                  description: "Jenkins Administrators"
+                  permissions:
+                    - "Overall/Administer"
+                  assignments:
+                    - "admin"
+                    - "rajkumar"
+                - name: "developer"
+                  description: "Developers"
+                  permissions:
+                    - "Overall/Read"
+                    - "Job/Build"
+                    - "Job/Read"
+                    - "Job/Workspace"
+                  assignments:
+                    - "developer"
+
+        clouds:
+          - kubernetes:
+              name: "kubernetes"
+              serverUrl: "https://kubernetes.default.svc.cluster.local"
+              namespace: "le-jenkins"
+              jenkinsUrl: "http://jenkins-svc:8080"
+              jenkinsTunnel: "jenkins-agent-svc:50000"
+              connectTimeout: 5
+              readTimeout: 15
+              maxRequestsPerHostStr: "32"
+              podLabels:
+                - key: "app"
+                  value: "jenkins-agent"
+              templates:
+                - name: "default-agent"
+                  label: "k8s-agent"
+                  namespace: "le-jenkins"
+                  containers:
+                    - name: "jnlp"
+                      image: "jenkins/inbound-agent:latest-jdk17"
+                      resourceRequestCpu: "500m"
+                      resourceRequestMemory: "512Mi"
+                      resourceLimitCpu: "1000m"
+                      resourceLimitMemory: "1Gi"
+                - name: "docker-agent"
+                  label: "docker-agent"
+                  namespace: "le-jenkins"
+                  serviceAccount: "jenkins"
+                  containers:
+                    - name: "jnlp"
+                      image: "jenkins/inbound-agent:latest-jdk17"
+                      resourceRequestCpu: "500m"
+                      resourceRequestMemory: "512Mi"
+                    - name: "docker"
+                      image: "docker:24-dind"
+                      privileged: true
+                      resourceRequestCpu: "500m"
+                      resourceRequestMemory: "512Mi"
+                      resourceLimitCpu: "2000m"
+                      resourceLimitMemory: "2Gi"
+                  volumes:
+                    - emptyDirVolume:
+                        memory: false
+                        mountPath: "/var/lib/docker"
+
+      credentials:
+        system:
+          domainCredentials:
+            - credentials:
+                - usernamePassword:
+                    scope: GLOBAL
+                    id: "harbor-credentials"
+                    username: "admin"
+                    password: "${HARBOR_ADMIN_PASSWORD}"
+                    description: "Harbor Registry credentials"
+                - string:
+                    scope: GLOBAL
+                    id: "argocd-token"
+                    secret: "${ARGOCD_AUTH_TOKEN}"
+                    description: "ArgoCD auth token"
+
+      unclassified:
+        location:
+          url: "https://le-jenkins.finspot.in/"
+          adminAddress: "rajkumar.madhu@finspot.in"
+        globalLibraries:
+          libraries: []
+        slackNotifier:
+          baseUrl: ""
+          teamDomain: "finspot"
+  kind: ConfigMap
+  metadata:
+    annotations:
+        {"apiVersion":"v1","data":{"jenkins.yaml":"jenkins:\n  systemMessage: \"LinkedEye CI/CD — FinSpot Technology Solutions\"\n  numExecutors: 0\n  mode: EXCLUSIVE\n  scmCheckoutRetryCount: 3\n\n  securityRealm:\n    local:\n      allowsSignup: false\n      users:\n        - id: \"admin\"\n          password: \"${JENKINS_ADMIN_PASSWORD}\"\n        - id: \"rajkumar\"\n          password: \"${JENKINS_USER_PASSWORD}\"\n\n  authorizationStrategy:\n    roleBased:\n      roles:\n        global:\n          - name: \"admin\"\n            description: \"Jenkins Administrators\"\n            permissions:\n              - \"Overall/Administer\"\n            assignments:\n              - \"admin\"\n              - \"rajkumar\"\n          - name: \"developer\"\n            description: \"Developers\"\n            permissions:\n              - \"Overall/Read\"\n              - \"Job/Build\"\n              - \"Job/Read\"\n              - \"Job/Workspace\"\n            assignments:\n              - \"developer\"\n\n  clouds:\n    - kubernetes:\n        name: \"kubernetes\"\n        serverUrl: \"https://kubernetes.default.svc.cluster.local\"\n        namespace: \"le-jenkins\"\n        jenkinsUrl: \"http://jenkins-svc:8080\"\n        jenkinsTunnel: \"jenkins-agent-svc:50000\"\n        connectTimeout: 5\n        readTimeout: 15\n        maxRequestsPerHostStr: \"32\"\n        podLabels:\n          - key: \"app\"\n            value: \"jenkins-agent\"\n        templates:\n          - name: \"default-agent\"\n            label: \"k8s-agent\"\n            namespace: \"le-jenkins\"\n            containers:\n              - name: \"jnlp\"\n                image: \"jenkins/inbound-agent:latest-jdk17\"\n                resourceRequestCpu: \"500m\"\n                resourceRequestMemory: \"512Mi\"\n                resourceLimitCpu: \"1000m\"\n                resourceLimitMemory: \"1Gi\"\n          - name: \"docker-agent\"\n            label: \"docker-agent\"\n            namespace: \"le-jenkins\"\n            serviceAccount: \"jenkins\"\n            containers:\n              - name: \"jnlp\"\n                image: \"jenkins/inbound-agent:latest-jdk17\"\n                resourceRequestCpu: \"500m\"\n                resourceRequestMemory: \"512Mi\"\n              - name: \"docker\"\n                image: \"docker:24-dind\"\n                privileged: true\n                resourceRequestCpu: \"500m\"\n                resourceRequestMemory: \"512Mi\"\n                resourceLimitCpu: \"2000m\"\n                resourceLimitMemory: \"2Gi\"\n            volumes:\n              - emptyDirVolume:\n                  memory: false\n                  mountPath: \"/var/lib/docker\"\n\ncredentials:\n  system:\n    domainCredentials:\n      - credentials:\n          - usernamePassword:\n              scope: GLOBAL\n              id: \"harbor-credentials\"\n              username: \"admin\"\n              password: \"${HARBOR_ADMIN_PASSWORD}\"\n              description: \"Harbor Registry credentials\"\n          - string:\n              scope: GLOBAL\n              id: \"argocd-token\"\n              secret: \"${ARGOCD_AUTH_TOKEN}\"\n              description: \"ArgoCD auth token\"\n\nunclassified:\n  location:\n    url: \"https://le-jenkins.finspot.in/\"\n    adminAddress: \"rajkumar.madhu@finspot.in\"\n  globalLibraries:\n    libraries: []\n  slackNotifier:\n    baseUrl: \"\"\n    teamDomain: \"finspot\"\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"jenkins","project":"linkedeye"},"name":"jenkins-casc-config","namespace":"le-jenkins"}}
+    labels:
+      app: jenkins
+      project: linkedeye
+    name: jenkins-casc-config
+    namespace: le-jenkins
+- apiVersion: v1
+  data:
+    ca.crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIDBTCCAe2gAwIBAgIIaD2eUcmw3GgwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjAzMTIwNjAxMDlaFw0zNjAzMDkwNjA2MDlaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDDzLiZviLx2bjEzapbQAc9qeWFu3t7ySX0NQw1oCwjoWbGSlG4207m6EFw
+      QuHEsLFg5404hSRh8FATiqvg6mlW1Fvmpknu7YFmJuVVbxpC4/5F2hd69ON1uZ4M
+      wWH0omBRTDfAs0iZ9j3+BOKt9CCVyGaN0gcasndAxize4E3BDsxMeG/X/NHNJfL1
+      9oFAFo6BIPyK6FUQM3AwYQSDgSnj5a3ksp1DTZNiVwnojn3/KjUBy72vvpdtkTOU
+      Jfu/imIkUhgWZ1fyFPLXAHGjA7B907PYCEstBOXRLqWkTCh7Ov6OBHgvrE5dcE/a
+      Bsh2OXDL+vk529sFjKVqyBHYc9GbAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTYXgh9iJwWhjnyuKzAP5Qttv+OKDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQCCrekj586a
+      nQT9XxXhiCl7nmjyOvSWMic5ChJg4n77Ry0GHF7crsjSPA9V2tgGm6+C27/aiwf9
+      rS9DWsNvsn9EHpZEQKOGFso90L32cXlo8c9YmEg2lEuZkA2hL69WchZ6aoQLyV68
+      38qiKOlgeBlNo3p4qMb7LGdvXLhYAKrHi8cpCT/H8b4PAlXsYZfEqPKAzrU0jTeq
+      Ug8UTHnLYJ7N/HAMHsprAEn5/UzP6x3BuZD20DyHrUNkdU7s9BjgtcleQmHK715R
+      JQzwx8zOUEBKfchONnreEuuMH17m8qJqVPsl6c2DC1Azi7tRFGJTQOYNBAXqiEzp
+      s+x6YEsT5iPc
+      -----END CERTIFICATE-----
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubernetes.io/description: Contains a CA bundle that can be used to verify the
+        kube-apiserver when using internal endpoints such as the internal service
+        IP or kubernetes.default.svc. No other usage is guaranteed across distributions
+        of Kubernetes clusters.
+    name: kube-root-ca.crt
+    namespace: le-jenkins
+- apiVersion: v1
+  data:
+    ARGOCD_AUTH_TOKEN: Y2hhbmdlbWUtZ2VuZXJhdGUtZnJvbS1hcmdvY2Q=
+    HARBOR_ADMIN_PASSWORD: SGFyYm9yQEZpblNwb3QyMDI1IQ==
+    JENKINS_ADMIN_PASSWORD: QWRtaW5ARmluU3BvdDIwMjUh
+    JENKINS_USER_PASSWORD: VXNlckBGaW5TcG90MjAyNSE=
+  kind: Secret
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"labels":{"app":"jenkins","project":"linkedeye"},"name":"jenkins-secrets","namespace":"le-jenkins"},"stringData":{"ARGOCD_AUTH_TOKEN":"changeme-generate-from-argocd","HARBOR_ADMIN_PASSWORD":"Harbor@FinSpot2025!","JENKINS_ADMIN_PASSWORD":"Admin@FinSpot2025!","JENKINS_USER_PASSWORD":"User@FinSpot2025!"},"type":"Opaque"}
+    labels:
+      app: jenkins
+      project: linkedeye
+    name: jenkins-secrets
+    namespace: le-jenkins
+  type: Opaque
+- apiVersion: v1
+  data:
+    POSTGRES_DB: amVua2luc2Ri
+    POSTGRES_HOST: MTcyLjIwLjY3LjE0
+    POSTGRES_PASSWORD: SmVua2luc0ZpblNwb3QyMDI1
+    POSTGRES_PORT: NTQzMg==
+    POSTGRES_USER: amVua2lucw==
+  kind: Secret
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"labels":{"app":"jenkins","project":"linkedeye"},"name":"le-jenkins-db-secret","namespace":"le-jenkins"},"stringData":{"POSTGRES_DB":"jenkinsdb","POSTGRES_HOST":"172.20.67.14","POSTGRES_PASSWORD":"JenkinsFinSpot2025","POSTGRES_PORT":"5432","POSTGRES_USER":"jenkins"},"type":"Opaque"}
+    labels:
+      app: jenkins
+      project: linkedeye
+    name: le-jenkins-db-secret
+    namespace: le-jenkins
+  type: Opaque
+- apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    annotations:
+        {"apiVersion":"networking.k8s.io/v1","kind":"NetworkPolicy","metadata":{"annotations":{},"labels":{"app":"jenkins","project":"linkedeye"},"name":"jenkins-network-policy","namespace":"le-jenkins"},"spec":{"egress":[{"ports":[{"port":53,"protocol":"UDP"},{"port":53,"protocol":"TCP"}]},{"ports":[{"port":443},{"port":80}]},{"ports":[{"port":5432}],"to":[{"namespaceSelector":{"matchLabels":{"kubernetes.io/metadata.name":"le-postgres"}},"podSelector":{"matchLabels":{"app":"le-postgres"}}}]},{"ports":[{"port":6443},{"port":443}]}],"ingress":[{"ports":[{"port":8080}]},{"ports":[{"port":50000}]}],"podSelector":{"matchLabels":{"app":"jenkins"}},"policyTypes":["Ingress","Egress"]}}
+    labels:
+      app: jenkins
+      project: linkedeye
+    name: jenkins-network-policy
+    namespace: le-jenkins
+  spec:
+    egress:
+    - ports:
+      - port: 53
+        protocol: UDP
+      - port: 53
+        protocol: TCP
+    - ports:
+      - port: 443
+        protocol: TCP
+      - port: 80
+        protocol: TCP
+    - ports:
+      - port: 5432
+        protocol: TCP
+      to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: le-postgres
+        podSelector:
+          matchLabels:
+            app: le-postgres
+    - ports:
+      - port: 6443
+        protocol: TCP
+      - port: 443
+        protocol: TCP
+    ingress:
+    - ports:
+      - port: 8080
+        protocol: TCP
+    - ports:
+      - port: 50000
+        protocol: TCP
+    podSelector:
+      matchLabels:
+        app: jenkins
+    policyTypes:
+    - Ingress
+    - Egress
+- apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    annotations:
+        {"apiVersion":"networking.k8s.io/v1","kind":"NetworkPolicy","metadata":{"annotations":{},"labels":{"app":"jenkins-postgres","project":"linkedeye"},"name":"jenkins-postgres-network-policy","namespace":"le-jenkins"},"spec":{"ingress":[{"from":[{"podSelector":{"matchLabels":{"app":"jenkins"}}}],"ports":[{"port":5432}]}],"podSelector":{"matchLabels":{"app":"jenkins-postgres"}},"policyTypes":["Ingress"]}}
+    labels:
+      app: jenkins-postgres
+      project: linkedeye
+    name: jenkins-postgres-network-policy
+    namespace: le-jenkins
+  spec:
+    ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: jenkins
+      ports:
+      - port: 5432
+        protocol: TCP
+    podSelector:
+      matchLabels:
+        app: jenkins-postgres
+    policyTypes:
+    - Ingress
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+      backup.velero.io/backup-volumes: jenkins-home
+        {"apiVersion":"v1","kind":"PersistentVolumeClaim","metadata":{"annotations":{},"labels":{"app":"jenkins","project":"linkedeye"},"name":"jenkins-pvc","namespace":"le-jenkins"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"20Gi"}},"storageClassName":"gp3"}}
+      pv.kubernetes.io/bind-completed: "yes"
+      pv.kubernetes.io/bound-by-controller: "yes"
+      volume.beta.kubernetes.io/storage-provisioner: ebs.csi.aws.com
+      volume.kubernetes.io/selected-node: ip-10-15-1-63.ap-south-1.compute.internal
+      volume.kubernetes.io/storage-provisioner: ebs.csi.aws.com
+    finalizers:
+    - kubernetes.io/pvc-protection
+    labels:
+      app: jenkins
+      project: linkedeye
+    name: jenkins-pvc
+    namespace: le-jenkins
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 20Gi
+    storageClassName: gp3
+    volumeMode: Filesystem
+    volumeName: pvc-aa1931b9-ea77-4e63-a092-75e4c7d6c0c8
+  status:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 20Gi
+    phase: Bound
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: default
+    namespace: le-jenkins
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"ServiceAccount","metadata":{"annotations":{},"labels":{"app":"jenkins","project":"linkedeye"},"name":"jenkins","namespace":"le-jenkins"}}
+    labels:
+      app: jenkins
+      project: linkedeye
+    name: jenkins
+    namespace: le-jenkins
+kind: List
+metadata:

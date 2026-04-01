@@ -1,0 +1,126 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    labels:
+      kubernetes.io/metadata.name: le-jenkins
+    name: le-jenkins
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    labels:
+      kubernetes.io/metadata.name: le-argocd
+    name: le-argocd
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    labels:
+      kubernetes.io/metadata.name: le-harbor
+    name: le-harbor
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    labels:
+      kubernetes.io/metadata.name: le-keycloak
+    name: le-keycloak
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    labels:
+      kubernetes.io/metadata.name: le-vault
+    name: le-vault
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    labels:
+      kubernetes.io/metadata.name: le-minio
+    name: le-minio
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"labels":{"app":"le-postgres","environment":"prod","project":"linkedeye"},"name":"le-postgres"}}
+    labels:
+      app: le-postgres
+      environment: prod
+      kubernetes.io/metadata.name: le-postgres
+      project: linkedeye
+    name: le-postgres
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+    labels:
+      kubernetes.io/metadata.name: le-monitoring
+      project: LinkedEye
+    name: le-monitoring
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+    labels:
+      kubernetes.io/metadata.name: le-dev
+      project: LinkedEye
+    name: le-dev
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+    labels:
+      environment: non-prod
+      kubernetes.io/metadata.name: le-uat
+      project: linkedeye
+    name: le-uat
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+kind: List
+metadata:

@@ -1,0 +1,1179 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "12"
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"harbor-core","project":"linkedeye"},"name":"harbor-core","namespace":"le-harbor"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"harbor-core"}},"template":{"metadata":{"labels":{"app":"harbor-core","project":"linkedeye"}},"spec":{"containers":[{"envFrom":[{"configMapRef":{"name":"harbor-core-config"}},{"secretRef":{"name":"harbor-core-secret"}},{"secretRef":{"name":"harbor-postgres-secret"}}],"image":"goharbor/harbor-core:v2.10.0","livenessProbe":{"failureThreshold":5,"httpGet":{"path":"/api/v2.0/ping","port":8080},"initialDelaySeconds":60,"periodSeconds":20},"name":"harbor-core","ports":[{"containerPort":8080}],"readinessProbe":{"httpGet":{"path":"/api/v2.0/ping","port":8080},"initialDelaySeconds":30,"periodSeconds":10},"resources":{"limits":{"cpu":"1000m","memory":"512Mi"},"requests":{"cpu":"150m","memory":"256Mi"}}}],"initContainers":[{"command":["sh","-c","until nc -z 172.20.67.14 5432; do sleep 3; done"],"image":"busybox:1.35","name":"wait-for-postgres"},{"command":["sh","-c","until nc -z 172.20.159.135 6379; do sleep 3; done"],"image":"busybox:1.35","name":"wait-for-redis"}],"nodeSelector":{"role":"mgmt-tools"}}}}}
+    labels:
+      app: harbor-core
+      project: linkedeye
+    name: harbor-core
+    namespace: le-harbor
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: harbor-core
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-03-17T19:47:06+01:00"
+        labels:
+          app: harbor-core
+          project: linkedeye
+      spec:
+        containers:
+        - envFrom:
+          - configMapRef:
+              name: harbor-core-config
+          - secretRef:
+              name: harbor-core-secret
+          - secretRef:
+              name: harbor-postgres-secret
+          image: goharbor/harbor-core:v2.10.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /api/v2.0/ping
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: harbor-core
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/v2.0/ping
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+            requests:
+              cpu: 150m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        initContainers:
+        - command:
+          - sh
+          - -c
+          - until nc -z 172.20.67.14 5432; do sleep 3; done
+          image: busybox:1.35
+          imagePullPolicy: IfNotPresent
+          name: wait-for-postgres
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        - command:
+          - sh
+          - -c
+          - until nc -z 172.20.159.135 6379; do sleep 3; done
+          image: busybox:1.35
+          imagePullPolicy: IfNotPresent
+          name: wait-for-redis
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        nodeSelector:
+          role: mgmt-tools
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-03-17T18:40:07Z"
+      lastUpdateTime: "2026-03-19T17:21:10Z"
+      message: ReplicaSet "harbor-core-5cbccb78cc" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2026-03-31T06:52:45Z"
+      lastUpdateTime: "2026-03-31T06:52:45Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 19
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "8"
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"harbor-jobservice","project":"linkedeye"},"name":"harbor-jobservice","namespace":"le-harbor"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"harbor-jobservice"}},"strategy":{"type":"Recreate"},"template":{"metadata":{"labels":{"app":"harbor-jobservice","project":"linkedeye"}},"spec":{"containers":[{"env":[{"name":"CORE_SECRET","valueFrom":{"secretKeyRef":{"key":"CORE_SECRET","name":"harbor-core-secret"}}},{"name":"JOBSERVICE_SECRET","valueFrom":{"secretKeyRef":{"key":"JOBSERVICE_SECRET","name":"harbor-core-secret"}}},{"name":"CORE_URL","value":"http://172.20.162.186:8080"},{"name":"REGISTRY_CONTROLLER_URL","value":"http://harbor-registryctl-svc:8080"},{"name":"REDIS_URL","value":"redis://harbor-redis-svc:6379/1"},{"name":"LOG_LEVEL","value":"info"}],"image":"goharbor/harbor-jobservice:v2.10.0","livenessProbe":{"httpGet":{"path":"/api/v1/stats","port":8080},"initialDelaySeconds":60,"periodSeconds":20},"name":"harbor-jobservice","ports":[{"containerPort":8080}],"readinessProbe":{"httpGet":{"path":"/api/v1/stats","port":8080},"initialDelaySeconds":30,"periodSeconds":10},"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"128Mi"}},"volumeMounts":[{"mountPath":"/var/log/jobs","name":"jobservice-data"},{"mountPath":"/etc/jobservice/config.yml","name":"jobservice-config","subPath":"config.yml"}]}],"initContainers":[{"command":["sh","-c","until nc -z 172.20.162.186 8080; do sleep 3; done"],"image":"busybox:1.35","name":"wait-for-core"}],"nodeSelector":{"role":"mgmt-tools"},"volumes":[{"name":"jobservice-data","persistentVolumeClaim":{"claimName":"harbor-jobservice-pvc"}},{"configMap":{"name":"harbor-jobservice-config"},"name":"jobservice-config"}]}}}}
+    labels:
+      app: harbor-jobservice
+      project: linkedeye
+    name: harbor-jobservice
+    namespace: le-harbor
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: harbor-jobservice
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-03-17T19:47:06+01:00"
+        labels:
+          app: harbor-jobservice
+          project: linkedeye
+      spec:
+        containers:
+        - env:
+          - name: CORE_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: CORE_SECRET
+                name: harbor-core-secret
+          - name: JOBSERVICE_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: JOBSERVICE_SECRET
+                name: harbor-core-secret
+          - name: CORE_URL
+            value: http://172.20.162.186:8080
+          - name: REGISTRY_CONTROLLER_URL
+            value: http://harbor-registryctl-svc:8080
+          - name: REDIS_URL
+            value: redis://harbor-redis-svc:6379/1
+          - name: LOG_LEVEL
+            value: info
+          image: goharbor/harbor-jobservice:v2.10.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/v1/stats
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: harbor-jobservice
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/v1/stats
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /var/log/jobs
+            name: jobservice-data
+          - mountPath: /etc/jobservice/config.yml
+            name: jobservice-config
+            subPath: config.yml
+        dnsPolicy: ClusterFirst
+        initContainers:
+        - command:
+          - sh
+          - -c
+          - until nc -z 172.20.162.186 8080; do sleep 3; done
+          image: busybox:1.35
+          imagePullPolicy: IfNotPresent
+          name: wait-for-core
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        nodeSelector:
+          role: mgmt-tools
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: jobservice-data
+          persistentVolumeClaim:
+            claimName: harbor-jobservice-pvc
+        - configMap:
+            defaultMode: 420
+            name: harbor-jobservice-config
+          name: jobservice-config
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-03-19T04:27:14Z"
+      lastUpdateTime: "2026-03-19T04:27:55Z"
+      message: ReplicaSet "harbor-jobservice-b8664d5b6" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2026-03-31T06:53:26Z"
+      lastUpdateTime: "2026-03-31T06:53:26Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 15
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "10"
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"harbor-portal","project":"linkedeye"},"name":"harbor-portal","namespace":"le-harbor"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"harbor-portal"}},"template":{"metadata":{"labels":{"app":"harbor-portal","project":"linkedeye"}},"spec":{"containers":[{"image":"goharbor/harbor-portal:v2.10.0","livenessProbe":{"httpGet":{"path":"/","port":8080},"initialDelaySeconds":30,"periodSeconds":20},"name":"harbor-portal","ports":[{"containerPort":8080}],"readinessProbe":{"httpGet":{"path":"/","port":8080},"initialDelaySeconds":10,"periodSeconds":10},"resources":{"limits":{"cpu":"500m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"128Mi"}},"securityContext":{"runAsUser":0},"volumeMounts":[{"mountPath":"/etc/nginx/nginx.conf","name":"portal-config","subPath":"nginx.conf"}]}],"nodeSelector":{"role":"mgmt-tools"},"volumes":[{"configMap":{"name":"harbor-portal-config"},"name":"portal-config"}]}}}}
+    labels:
+      app: harbor-portal
+      project: linkedeye
+    name: harbor-portal
+    namespace: le-harbor
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: harbor-portal
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-03-17T19:47:06+01:00"
+        labels:
+          app: harbor-portal
+          project: linkedeye
+      spec:
+        containers:
+        - image: goharbor/harbor-portal:v2.10.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: harbor-portal
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            runAsUser: 0
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /etc/nginx/nginx.conf
+            name: portal-config
+            subPath: nginx.conf
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          role: mgmt-tools
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: harbor-portal-config
+          name: portal-config
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-03-19T04:27:14Z"
+      lastUpdateTime: "2026-03-19T04:27:25Z"
+      message: ReplicaSet "harbor-portal-54868cd567" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2026-03-30T07:00:41Z"
+      lastUpdateTime: "2026-03-30T07:00:41Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 17
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "6"
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"harbor-redis","project":"linkedeye"},"name":"harbor-redis","namespace":"le-harbor"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"harbor-redis"}},"strategy":{"type":"Recreate"},"template":{"metadata":{"labels":{"app":"harbor-redis","project":"linkedeye"}},"spec":{"containers":[{"command":["redis-server","--appendonly","yes"],"image":"redis:7-alpine","livenessProbe":{"exec":{"command":["redis-cli","ping"]},"initialDelaySeconds":15,"periodSeconds":10},"name":"redis","ports":[{"containerPort":6379}],"readinessProbe":{"exec":{"command":["redis-cli","ping"]},"initialDelaySeconds":5,"periodSeconds":5},"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/data","name":"redis-data"}]}],"nodeSelector":{"role":"mgmt-tools"},"volumes":[{"name":"redis-data","persistentVolumeClaim":{"claimName":"harbor-redis-pvc"}}]}}}}
+    labels:
+      app: harbor-redis
+      project: linkedeye
+    name: harbor-redis
+    namespace: le-harbor
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: harbor-redis
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-03-17T19:47:06+01:00"
+        labels:
+          app: harbor-redis
+          project: linkedeye
+      spec:
+        containers:
+        - command:
+          - redis-server
+          - --appendonly
+          - "yes"
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            exec:
+              command:
+              - redis-cli
+              - ping
+            failureThreshold: 3
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: redis
+          ports:
+          - containerPort: 6379
+            protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+              - redis-cli
+              - ping
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /data
+            name: redis-data
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          role: mgmt-tools
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: harbor-redis-pvc
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-03-17T05:31:25Z"
+      lastUpdateTime: "2026-03-17T18:47:17Z"
+      message: ReplicaSet "harbor-redis-f746587cd" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2026-03-31T06:47:56Z"
+      lastUpdateTime: "2026-03-31T06:47:56Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 13
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "11"
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"harbor-registry","project":"linkedeye"},"name":"harbor-registry","namespace":"le-harbor"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"harbor-registry"}},"strategy":{"type":"Recreate"},"template":{"metadata":{"labels":{"app":"harbor-registry","project":"linkedeye"}},"spec":{"containers":[{"env":[{"name":"REGISTRY_HTTP_SECRET","valueFrom":{"secretKeyRef":{"key":"CORE_SECRET","name":"harbor-core-secret"}}}],"image":"goharbor/registry-photon:v2.10.0","livenessProbe":{"httpGet":{"path":"/debug/health","port":5001},"initialDelaySeconds":30,"periodSeconds":20},"name":"registry","ports":[{"containerPort":5000},{"containerPort":5001}],"readinessProbe":{"httpGet":{"path":"/debug/health","port":5001},"initialDelaySeconds":10,"periodSeconds":10},"resources":{"limits":{"cpu":"1000m","memory":"1Gi"},"requests":{"cpu":"150m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/storage","name":"registry-data"},{"mountPath":"/etc/registry/config.yml","name":"registry-config","subPath":"config.yml"}]},{"env":[{"name":"CORE_SECRET","valueFrom":{"secretKeyRef":{"key":"CORE_SECRET","name":"harbor-core-secret"}}},{"name":"JOBSERVICE_SECRET","valueFrom":{"secretKeyRef":{"key":"JOBSERVICE_SECRET","name":"harbor-core-secret"}}}],"image":"goharbor/harbor-registryctl:v2.10.0","name":"registryctl","ports":[{"containerPort":8080}],"resources":{"limits":{"cpu":"500m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"128Mi"}},"volumeMounts":[{"mountPath":"/storage","name":"registry-data"},{"mountPath":"/etc/registry/config.yml","name":"registry-config","subPath":"config.yml"},{"mountPath":"/etc/registryctl/config.yml","name":"registryctl-config","subPath":"config.yml"}]}],"nodeSelector":{"role":"mgmt-tools"},"volumes":[{"name":"registry-data","persistentVolumeClaim":{"claimName":"harbor-registry-pvc"}},{"configMap":{"name":"harbor-registry-config"},"name":"registry-config"},{"configMap":{"name":"harbor-registryctl-config"},"name":"registryctl-config"}]}}}}
+    labels:
+      app: harbor-registry
+      project: linkedeye
+    name: harbor-registry
+    namespace: le-harbor
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: harbor-registry
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-03-17T19:47:06+01:00"
+        labels:
+          app: harbor-registry
+          project: linkedeye
+      spec:
+        containers:
+        - env:
+          - name: REGISTRY_HTTP_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: CORE_SECRET
+                name: harbor-core-secret
+          image: goharbor/registry-photon:v2.10.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /debug/health
+              port: 5001
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: registry
+          ports:
+          - containerPort: 5000
+            protocol: TCP
+          - containerPort: 5001
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /debug/health
+              port: 5001
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 150m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /storage
+            name: registry-data
+          - mountPath: /etc/registry/config.yml
+            name: registry-config
+            subPath: config.yml
+        - env:
+          - name: CORE_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: CORE_SECRET
+                name: harbor-core-secret
+          - name: JOBSERVICE_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: JOBSERVICE_SECRET
+                name: harbor-core-secret
+          image: goharbor/harbor-registryctl:v2.10.0
+          imagePullPolicy: IfNotPresent
+          name: registryctl
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /storage
+            name: registry-data
+          - mountPath: /etc/registry/config.yml
+            name: registry-config
+            subPath: config.yml
+          - mountPath: /etc/registryctl/config.yml
+            name: registryctl-config
+            subPath: config.yml
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          role: mgmt-tools
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: registry-data
+          persistentVolumeClaim:
+            claimName: harbor-registry-pvc
+        - configMap:
+            defaultMode: 420
+            name: harbor-registry-config
+          name: registry-config
+        - configMap:
+            defaultMode: 420
+            name: harbor-registryctl-config
+          name: registryctl-config
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-03-19T06:28:30Z"
+      lastUpdateTime: "2026-03-19T17:20:37Z"
+      message: ReplicaSet "harbor-registry-6f4f45c78d" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2026-03-31T06:49:15Z"
+      lastUpdateTime: "2026-03-31T06:49:15Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 18
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"harbor-core","project":"linkedeye"},"name":"harbor-core-svc","namespace":"le-harbor"},"spec":{"ports":[{"port":8080,"targetPort":8080}],"selector":{"app":"harbor-core"},"type":"NodePort"}}
+    labels:
+      app: harbor-core
+      project: linkedeye
+    name: harbor-core-svc
+    namespace: le-harbor
+  spec:
+    clusterIP: 172.20.162.186
+    clusterIPs:
+    - 172.20.162.186
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - nodePort: 30748
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: harbor-core
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"harbor-jobservice","project":"linkedeye"},"name":"harbor-jobservice-svc","namespace":"le-harbor"},"spec":{"ports":[{"port":8080,"targetPort":8080}],"selector":{"app":"harbor-jobservice"},"type":"NodePort"}}
+    labels:
+      app: harbor-jobservice
+      project: linkedeye
+    name: harbor-jobservice-svc
+    namespace: le-harbor
+  spec:
+    clusterIP: 172.20.230.27
+    clusterIPs:
+    - 172.20.230.27
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - nodePort: 31444
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: harbor-jobservice
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"harbor-portal","project":"linkedeye"},"name":"harbor-portal-svc","namespace":"le-harbor"},"spec":{"ports":[{"nodePort":30083,"port":8080,"targetPort":8080}],"selector":{"app":"harbor-portal"},"type":"NodePort"}}
+    labels:
+      app: harbor-portal
+      project: linkedeye
+    name: harbor-portal-svc
+    namespace: le-harbor
+  spec:
+    clusterIP: 172.20.86.96
+    clusterIPs:
+    - 172.20.86.96
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - nodePort: 30083
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: harbor-portal
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"harbor-redis","project":"linkedeye"},"name":"harbor-redis-svc","namespace":"le-harbor"},"spec":{"ports":[{"port":6379,"targetPort":6379}],"selector":{"app":"harbor-redis"},"type":"ClusterIP"}}
+    labels:
+      app: harbor-redis
+      project: linkedeye
+    name: harbor-redis-svc
+    namespace: le-harbor
+  spec:
+    clusterIP: 172.20.159.135
+    clusterIPs:
+    - 172.20.159.135
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - port: 6379
+      protocol: TCP
+      targetPort: 6379
+    selector:
+      app: harbor-redis
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"harbor-registry","project":"linkedeye"},"name":"harbor-registry-svc","namespace":"le-harbor"},"spec":{"ports":[{"name":"registry","nodePort":30500,"port":5000,"targetPort":5000},{"name":"registry-debug","port":5001,"targetPort":5001}],"selector":{"app":"harbor-registry"},"type":"NodePort"}}
+    labels:
+      app: harbor-registry
+      project: linkedeye
+    name: harbor-registry-svc
+    namespace: le-harbor
+  spec:
+    clusterIP: 172.20.41.82
+    clusterIPs:
+    - 172.20.41.82
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: registry
+      nodePort: 30500
+      port: 5000
+      protocol: TCP
+      targetPort: 5000
+    - name: registry-debug
+      nodePort: 30198
+      port: 5001
+      protocol: TCP
+      targetPort: 5001
+    selector:
+      app: harbor-registry
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"harbor-registry","project":"linkedeye"},"name":"harbor-registryctl-svc","namespace":"le-harbor"},"spec":{"ports":[{"port":8080,"targetPort":8080}],"selector":{"app":"harbor-registry"},"type":"NodePort"}}
+    labels:
+      app: harbor-registry
+      project: linkedeye
+    name: harbor-registryctl-svc
+    namespace: le-harbor
+  spec:
+    clusterIP: 172.20.246.255
+    clusterIPs:
+    - 172.20.246.255
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - nodePort: 30914
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: harbor-registry
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  data:
+    _REDIS_URL_CORE: redis://harbor-redis-svc:6379/0
+    _REDIS_URL_REG: redis://harbor-redis-svc:6379/2
+    CHART_CACHE_DRIVER: redis
+    CORE_URL: http://harbor-core-svc:8080
+    DATABASE_TYPE: postgresql
+    EXT_ENDPOINT: https://le-harbor.finspot.in
+    EXTERNAL_URL: https://le-harbor.finspot.in
+    JOBSERVICE_URL: http://harbor-jobservice-svc:8080
+    LOG_LEVEL: info
+    MAX_JOB_WORKERS: "10"
+    PERMITTED_REGISTRY_TYPES_FOR_PROXY_CACHE: docker-hub,harbor,azure-acr,aws-ecr,google-gcr,quay,docker-registry,helm-hub
+    PORT: "8080"
+    POSTGRESQL_DATABASE: harbordb
+    POSTGRESQL_HOST: 172.20.67.14
+    POSTGRESQL_MAX_IDLE_CONNS: "50"
+    POSTGRESQL_MAX_OPEN_CONNS: "100"
+    POSTGRESQL_PORT: "5432"
+    POSTGRESQL_SSLMODE: disable
+    POSTGRESQL_USERNAME: harbor
+    REDIS_URL: redis://harbor-redis-svc:6379/0
+    REGISTRY_CONTROLLER_URL: http://harbor-registryctl-svc:8080
+    REGISTRY_URL: http://harbor-registry-svc:5000
+    TOKEN_SERVICE_URL: http://harbor-core-svc:8080/service/token
+  kind: ConfigMap
+  metadata:
+    annotations:
+        {"apiVersion":"v1","data":{"CHART_CACHE_DRIVER":"redis","CORE_URL":"http://harbor-core-svc:8080","DATABASE_TYPE":"postgresql","EXTERNAL_URL":"https://le-harbor.finspot.in","EXT_ENDPOINT":"https://le-harbor.finspot.in","JOBSERVICE_URL":"http://harbor-jobservice-svc:8080","LOG_LEVEL":"info","MAX_JOB_WORKERS":"10","PERMITTED_REGISTRY_TYPES_FOR_PROXY_CACHE":"docker-hub,harbor,azure-acr,aws-ecr,google-gcr,quay,docker-registry,helm-hub","PORT":"8080","POSTGRESQL_DATABASE":"harbordb","POSTGRESQL_HOST":"172.20.67.14","POSTGRESQL_MAX_IDLE_CONNS":"50","POSTGRESQL_MAX_OPEN_CONNS":"100","POSTGRESQL_PORT":"5432","POSTGRESQL_SSLMODE":"disable","POSTGRESQL_USERNAME":"harbor","REDIS_URL":"redis://harbor-redis-svc:6379/0","REGISTRY_CONTROLLER_URL":"http://harbor-registryctl-svc:8080","REGISTRY_URL":"http://harbor-registry-svc:5000","TOKEN_SERVICE_URL":"http://harbor-core-svc:8080/service/token","_REDIS_URL_CORE":"redis://harbor-redis-svc:6379/0","_REDIS_URL_REG":"redis://harbor-redis-svc:6379/2"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"harbor","project":"linkedeye"},"name":"harbor-core-config","namespace":"le-harbor"}}
+    labels:
+      app: harbor
+      project: linkedeye
+    name: harbor-core-config
+    namespace: le-harbor
+- apiVersion: v1
+  data:
+    config.yml: |
+      ---
+      protocol: "http"
+      port: 8080
+      worker_pool:
+        workers: 10
+        backend: "redis"
+        redis_pool:
+          redis_url: "redis://harbor-redis-svc:6379/1"
+          namespace: "harbor_job_service_namespace"
+          idle_timeout_second: 3600
+      job_loggers:
+        - name: "FILE"
+          level: "INFO"
+          settings:
+            base_dir: "/var/log/jobs"
+      loggers:
+        - name: "STD_OUTPUT"
+          level: "INFO"
+  kind: ConfigMap
+  metadata:
+    annotations:
+        {"apiVersion":"v1","data":{"config.yml":"---\nprotocol: \"http\"\nport: 8080\nworker_pool:\n  workers: 10\n  backend: \"redis\"\n  redis_pool:\n    redis_url: \"redis://harbor-redis-svc:6379/1\"\n    namespace: \"harbor_job_service_namespace\"\n    idle_timeout_second: 3600\njob_loggers:\n  - name: \"FILE\"\n    level: \"INFO\"\n    settings:\n      base_dir: \"/var/log/jobs\"\nloggers:\n  - name: \"STD_OUTPUT\"\n    level: \"INFO\"\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"harbor-jobservice","project":"linkedeye"},"name":"harbor-jobservice-config","namespace":"le-harbor"}}
+    labels:
+      app: harbor-jobservice
+      project: linkedeye
+    name: harbor-jobservice-config
+    namespace: le-harbor
+- apiVersion: v1
+  data:
+    nginx.conf: |
+      worker_processes auto;
+      pid /tmp/nginx.pid;
+      events {
+        worker_connections 1024;
+      }
+      http {
+        client_body_temp_path /tmp/client_body_temp;
+        proxy_temp_path /tmp/proxy_temp;
+        fastcgi_temp_path /tmp/fastcgi_temp;
+        uwsgi_temp_path /tmp/uwsgi_temp;
+        scgi_temp_path /tmp/scgi_temp;
+        server {
+          listen 8080;
+          server_name localhost;
+          include /etc/nginx/mime.types;
+          location / {
+            root /usr/share/nginx/html;
+            index index.html index.htm;
+            try_files $uri /index.html;
+          }
+          location /api/ {
+            proxy_pass http://harbor-core-svc:8080/api/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_buffering off;
+            proxy_request_buffering off;
+          }
+          location /service/ {
+            proxy_pass http://harbor-core-svc:8080/service/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+          }
+          location /v2/ {
+            proxy_pass http://harbor-core-svc:8080/v2/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+          }
+          location /chartrepo/ {
+            proxy_pass http://harbor-core-svc:8080/chartrepo/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+          }
+          location /c/ {
+            proxy_pass http://harbor-core-svc:8080/c/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+          }
+        }
+      }
+  kind: ConfigMap
+  metadata:
+    annotations:
+        {"apiVersion":"v1","data":{"nginx.conf":"worker_processes auto;\npid /tmp/nginx.pid;\nevents {\n  worker_connections 1024;\n}\nhttp {\n  client_body_temp_path /tmp/client_body_temp;\n  proxy_temp_path /tmp/proxy_temp;\n  fastcgi_temp_path /tmp/fastcgi_temp;\n  uwsgi_temp_path /tmp/uwsgi_temp;\n  scgi_temp_path /tmp/scgi_temp;\n  server {\n    listen 8080;\n    server_name localhost;\n    include /etc/nginx/mime.types;\n    location / {\n      root /usr/share/nginx/html;\n      index index.html index.htm;\n      try_files $uri /index.html;\n    }\n    location /api/ {\n      proxy_pass http://harbor-core-svc:8080/api/;\n      proxy_set_header Host $host;\n      proxy_set_header X-Real-IP $remote_addr;\n      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n      proxy_set_header X-Forwarded-Proto $scheme;\n      proxy_buffering off;\n      proxy_request_buffering off;\n    }\n    location /service/ {\n      proxy_pass http://harbor-core-svc:8080/service/;\n      proxy_set_header Host $host;\n      proxy_set_header X-Real-IP $remote_addr;\n      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n      proxy_set_header X-Forwarded-Proto $scheme;\n    }\n    location /v2/ {\n      proxy_pass http://harbor-core-svc:8080/v2/;\n      proxy_set_header Host $host;\n      proxy_set_header X-Real-IP $remote_addr;\n      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n      proxy_set_header X-Forwarded-Proto $scheme;\n    }\n    location /chartrepo/ {\n      proxy_pass http://harbor-core-svc:8080/chartrepo/;\n      proxy_set_header Host $host;\n      proxy_set_header X-Real-IP $remote_addr;\n      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n      proxy_set_header X-Forwarded-Proto $scheme;\n    }\n    location /c/ {\n      proxy_pass http://harbor-core-svc:8080/c/;\n      proxy_set_header Host $host;\n      proxy_set_header X-Real-IP $remote_addr;\n      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n      proxy_set_header X-Forwarded-Proto $scheme;\n    }\n  }\n}\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"harbor-portal","project":"linkedeye"},"name":"harbor-portal-config","namespace":"le-harbor"}}
+    labels:
+      app: harbor-portal
+      project: linkedeye
+    name: harbor-portal-config
+    namespace: le-harbor
+- apiVersion: v1
+  data:
+    config.yml: |
+      version: 0.1
+      log:
+        level: info
+        fields:
+          service: registry
+      storage:
+        filesystem:
+          rootdirectory: /storage
+        cache:
+          layerinfo: redis
+        maintenance:
+          uploadpurging:
+            enabled: true
+            age: 168h
+            interval: 24h
+            dryrun: false
+        delete:
+          enabled: true
+        redirect:
+          disable: false
+      redis:
+        addr: harbor-redis-svc:6379
+        db: 2
+      http:
+        addr: :5000
+        relativeurls: false
+        debug:
+          addr: :5001
+      # Auth disabled for initial bring-up (internal access only via Harbor Core)
+      # auth:
+      #   token:
+      #     realm: https://le-harbor.finspot.in/service/token
+      #     service: harbor-registry
+      #     issuer: harbor-token-issuer
+      #     rootcertbundle: /etc/registry/root.crt
+      validation:
+        disabled: true
+      compatibility:
+        schema1:
+          enabled: true
+  kind: ConfigMap
+  metadata:
+    annotations:
+        {"apiVersion":"v1","data":{"config.yml":"version: 0.1\nlog:\n  level: info\n  fields:\n    service: registry\nstorage:\n  filesystem:\n    rootdirectory: /storage\n  cache:\n    layerinfo: redis\n  maintenance:\n    uploadpurging:\n      enabled: true\n      age: 168h\n      interval: 24h\n      dryrun: false\n  delete:\n    enabled: true\n  redirect:\n    disable: false\nredis:\n  addr: harbor-redis-svc:6379\n  db: 2\nhttp:\n  addr: :5000\n  relativeurls: false\n  debug:\n    addr: :5001\n# Auth disabled for initial bring-up (internal access only via Harbor Core)\n# auth:\n#   token:\n#     realm: https://le-harbor.finspot.in/service/token\n#     service: harbor-registry\n#     issuer: harbor-token-issuer\n#     rootcertbundle: /etc/registry/root.crt\nvalidation:\n  disabled: true\ncompatibility:\n  schema1:\n    enabled: true\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"harbor-registry","project":"linkedeye"},"name":"harbor-registry-config","namespace":"le-harbor"}}
+    labels:
+      app: harbor-registry
+      project: linkedeye
+    name: harbor-registry-config
+    namespace: le-harbor
+- apiVersion: v1
+  data:
+    config.yml: |
+      ---
+      protocol: "http"
+      port: 8080
+      log_level: info
+      registry_config: "/etc/registry/config.yml"
+  kind: ConfigMap
+  metadata:
+    annotations:
+        {"apiVersion":"v1","data":{"config.yml":"---\nprotocol: \"http\"\nport: 8080\nlog_level: info\nregistry_config: \"/etc/registry/config.yml\"\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"harbor-registry","project":"linkedeye"},"name":"harbor-registryctl-config","namespace":"le-harbor"}}
+    labels:
+      app: harbor-registry
+      project: linkedeye
+    name: harbor-registryctl-config
+    namespace: le-harbor
+- apiVersion: v1
+  data:
+    ca.crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIDBTCCAe2gAwIBAgIIaD2eUcmw3GgwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjAzMTIwNjAxMDlaFw0zNjAzMDkwNjA2MDlaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDDzLiZviLx2bjEzapbQAc9qeWFu3t7ySX0NQw1oCwjoWbGSlG4207m6EFw
+      QuHEsLFg5404hSRh8FATiqvg6mlW1Fvmpknu7YFmJuVVbxpC4/5F2hd69ON1uZ4M
+      wWH0omBRTDfAs0iZ9j3+BOKt9CCVyGaN0gcasndAxize4E3BDsxMeG/X/NHNJfL1
+      9oFAFo6BIPyK6FUQM3AwYQSDgSnj5a3ksp1DTZNiVwnojn3/KjUBy72vvpdtkTOU
+      Jfu/imIkUhgWZ1fyFPLXAHGjA7B907PYCEstBOXRLqWkTCh7Ov6OBHgvrE5dcE/a
+      Bsh2OXDL+vk529sFjKVqyBHYc9GbAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTYXgh9iJwWhjnyuKzAP5Qttv+OKDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQCCrekj586a
+      nQT9XxXhiCl7nmjyOvSWMic5ChJg4n77Ry0GHF7crsjSPA9V2tgGm6+C27/aiwf9
+      rS9DWsNvsn9EHpZEQKOGFso90L32cXlo8c9YmEg2lEuZkA2hL69WchZ6aoQLyV68
+      38qiKOlgeBlNo3p4qMb7LGdvXLhYAKrHi8cpCT/H8b4PAlXsYZfEqPKAzrU0jTeq
+      Ug8UTHnLYJ7N/HAMHsprAEn5/UzP6x3BuZD20DyHrUNkdU7s9BjgtcleQmHK715R
+      JQzwx8zOUEBKfchONnreEuuMH17m8qJqVPsl6c2DC1Azi7tRFGJTQOYNBAXqiEzp
+      s+x6YEsT5iPc
+      -----END CERTIFICATE-----
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubernetes.io/description: Contains a CA bundle that can be used to verify the
+        kube-apiserver when using internal endpoints such as the internal service
+        IP or kubernetes.default.svc. No other usage is guaranteed across distributions
+        of Kubernetes clusters.
+    name: kube-root-ca.crt
+    namespace: le-harbor
+- apiVersion: v1
+  data:
+    CORE_SECRET: bm90LWNvcmUtc2VjcmV0LWNoYW5nZW1l
+    CSRF_KEY: bm90LWEtY3NyZi1rZXktY2hhbmdlbWUtbm93LTMyYw==
+    HARBOR_ADMIN_PASSWORD: SGFyYm9yRmluU3BvdDIwMjU=
+    JOBSERVICE_SECRET: bm90LWpvYi1zZWNyZXQtY2hhbmdlbWU=
+    POSTGRESQL_PASSWORD: SGFyYm9yRmluU3BvdDIwMjU=
+    SECRET_KEY: bm90LWEtc2VjcmV0LWtleS1jaGFuZ2U=
+  kind: Secret
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"labels":{"app":"harbor","project":"linkedeye"},"name":"harbor-core-secret","namespace":"le-harbor"},"stringData":{"CORE_SECRET":"not-core-secret-changeme","CSRF_KEY":"not-a-csrf-key-changeme-now-32c","HARBOR_ADMIN_PASSWORD":"HarborFinSpot2025","JOBSERVICE_SECRET":"not-job-secret-changeme","POSTGRESQL_PASSWORD":"HarborFinSpot2025","SECRET_KEY":"not-a-secret-key-change"},"type":"Opaque"}
+    labels:
+      app: harbor
+      project: linkedeye
+    name: harbor-core-secret
+    namespace: le-harbor
+  type: Opaque
+- apiVersion: v1
+  data:
+    POSTGRESQL_PASSWORD: SGFyYm9yRmluU3BvdDIwMjU=
+  kind: Secret
+  metadata:
+    annotations:
+    name: harbor-postgres-secret
+    namespace: le-harbor
+  type: Opaque
+- apiVersion: v1
+  data:
+    POSTGRES_DB: aGFyYm9yZGI=
+    POSTGRES_HOST: MTcyLjIwLjY3LjE0
+    POSTGRES_PASSWORD: SGFyYm9yRmluU3BvdDIwMjU=
+    POSTGRES_PORT: NTQzMg==
+    POSTGRES_USER: aGFyYm9y
+  kind: Secret
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"labels":{"app":"harbor","project":"linkedeye"},"name":"le-harbor-db-secret","namespace":"le-harbor"},"stringData":{"POSTGRES_DB":"harbordb","POSTGRES_HOST":"172.20.67.14","POSTGRES_PASSWORD":"HarborFinSpot2025","POSTGRES_PORT":"5432","POSTGRES_USER":"harbor"},"type":"Opaque"}
+    labels:
+      app: harbor
+      project: linkedeye
+    name: le-harbor-db-secret
+    namespace: le-harbor
+  type: Opaque
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"PersistentVolumeClaim","metadata":{"annotations":{},"labels":{"app":"harbor-jobservice","project":"linkedeye"},"name":"harbor-jobservice-pvc","namespace":"le-harbor"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"5Gi"}},"storageClassName":"gp3"}}
+      pv.kubernetes.io/bind-completed: "yes"
+      pv.kubernetes.io/bound-by-controller: "yes"
+      volume.beta.kubernetes.io/storage-provisioner: ebs.csi.aws.com
+      volume.kubernetes.io/selected-node: ip-10-15-1-169.ap-south-1.compute.internal
+      volume.kubernetes.io/storage-provisioner: ebs.csi.aws.com
+    finalizers:
+    - kubernetes.io/pvc-protection
+    labels:
+      app: harbor-jobservice
+      project: linkedeye
+    name: harbor-jobservice-pvc
+    namespace: le-harbor
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 5Gi
+    storageClassName: gp3
+    volumeMode: Filesystem
+    volumeName: pvc-371dc5ec-dcff-4475-b907-2a5a60b8ccd2
+  status:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 5Gi
+    phase: Bound
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"PersistentVolumeClaim","metadata":{"annotations":{},"labels":{"app":"harbor-redis","project":"linkedeye"},"name":"harbor-redis-pvc","namespace":"le-harbor"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"5Gi"}},"storageClassName":"gp3"}}
+      pv.kubernetes.io/bind-completed: "yes"
+      pv.kubernetes.io/bound-by-controller: "yes"
+      volume.beta.kubernetes.io/storage-provisioner: ebs.csi.aws.com
+      volume.kubernetes.io/selected-node: ip-10-15-1-169.ap-south-1.compute.internal
+      volume.kubernetes.io/storage-provisioner: ebs.csi.aws.com
+    finalizers:
+    - kubernetes.io/pvc-protection
+    labels:
+      app: harbor-redis
+      project: linkedeye
+    name: harbor-redis-pvc
+    namespace: le-harbor
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 5Gi
+    storageClassName: gp3
+    volumeMode: Filesystem
+    volumeName: pvc-124f716c-8865-4544-b1f1-62983373e99e
+  status:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 5Gi
+    phase: Bound
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"PersistentVolumeClaim","metadata":{"annotations":{},"labels":{"app":"harbor-registry","project":"linkedeye"},"name":"harbor-registry-pvc","namespace":"le-harbor"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"20Gi"}},"storageClassName":"gp3"}}
+      pv.kubernetes.io/bind-completed: "yes"
+      pv.kubernetes.io/bound-by-controller: "yes"
+      volume.beta.kubernetes.io/storage-provisioner: ebs.csi.aws.com
+      volume.kubernetes.io/selected-node: ip-10-15-1-169.ap-south-1.compute.internal
+      volume.kubernetes.io/storage-provisioner: ebs.csi.aws.com
+    finalizers:
+    - kubernetes.io/pvc-protection
+    labels:
+      app: harbor-registry
+      project: linkedeye
+    name: harbor-registry-pvc
+    namespace: le-harbor
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 20Gi
+    storageClassName: gp3
+    volumeMode: Filesystem
+    volumeName: pvc-5315a68f-02fe-4fc0-a1f4-7e7995f7040f
+  status:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 20Gi
+    phase: Bound
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: default
+    namespace: le-harbor
+kind: List
+metadata:

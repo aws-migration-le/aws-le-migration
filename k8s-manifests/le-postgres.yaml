@@ -1,0 +1,381 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "2"
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"le-postgres","project":"linkedeye"},"name":"le-postgres","namespace":"le-postgres"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"le-postgres"}},"strategy":{"type":"Recreate"},"template":{"metadata":{"labels":{"app":"le-postgres","project":"linkedeye"}},"spec":{"containers":[{"env":[{"name":"POSTGRES_USER","valueFrom":{"secretKeyRef":{"key":"POSTGRES_USER","name":"le-postgres-secret"}}},{"name":"POSTGRES_PASSWORD","valueFrom":{"secretKeyRef":{"key":"POSTGRES_PASSWORD","name":"le-postgres-secret"}}},{"name":"POSTGRES_DB","value":"postgres"},{"name":"JENKINS_PASSWORD","valueFrom":{"secretKeyRef":{"key":"JENKINS_PASSWORD","name":"le-postgres-secret"}}},{"name":"HARBOR_PASSWORD","valueFrom":{"secretKeyRef":{"key":"HARBOR_PASSWORD","name":"le-postgres-secret"}}},{"name":"KEYCLOAK_PASSWORD","valueFrom":{"secretKeyRef":{"key":"KEYCLOAK_PASSWORD","name":"le-postgres-secret"}}},{"name":"VAULT_PASSWORD","valueFrom":{"secretKeyRef":{"key":"VAULT_PASSWORD","name":"le-postgres-secret"}}},{"name":"ARGOCD_PASSWORD","valueFrom":{"secretKeyRef":{"key":"ARGOCD_PASSWORD","name":"le-postgres-secret"}}},{"name":"REDMINE_PASSWORD","valueFrom":{"secretKeyRef":{"key":"REDMINE_PASSWORD","name":"le-postgres-secret"}}},{"name":"ITSM_PASSWORD","valueFrom":{"secretKeyRef":{"key":"ITSM_PASSWORD","name":"le-postgres-secret"}}}],"image":"postgres:15-alpine","livenessProbe":{"exec":{"command":["pg_isready","-U","leadmin"]},"failureThreshold":5,"initialDelaySeconds":30,"periodSeconds":10},"name":"postgres","ports":[{"containerPort":5432}],"readinessProbe":{"exec":{"command":["pg_isready","-U","leadmin"]},"initialDelaySeconds":10,"periodSeconds":5},"resources":{"limits":{"cpu":"2000m","memory":"4Gi"},"requests":{"cpu":"500m","memory":"1Gi"}},"volumeMounts":[{"mountPath":"/var/lib/postgresql/data","name":"postgres-data","subPath":"pgdata"},{"mountPath":"/docker-entrypoint-initdb.d","name":"init-scripts","readOnly":true}]}],"nodeSelector":{"role":"mgmt-tools"},"volumes":[{"name":"postgres-data","persistentVolumeClaim":{"claimName":"le-postgres-pvc"}},{"configMap":{"defaultMode":493,"name":"le-postgres-init"},"name":"init-scripts"}]}}}}
+    labels:
+      app: le-postgres
+      project: linkedeye
+    name: le-postgres
+    namespace: le-postgres
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: le-postgres
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: le-postgres
+          project: linkedeye
+      spec:
+        containers:
+        - env:
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                key: POSTGRES_USER
+                name: le-postgres-secret
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: POSTGRES_PASSWORD
+                name: le-postgres-secret
+          - name: POSTGRES_DB
+            value: postgres
+          - name: JENKINS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: JENKINS_PASSWORD
+                name: le-postgres-secret
+          - name: HARBOR_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: HARBOR_PASSWORD
+                name: le-postgres-secret
+          - name: KEYCLOAK_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: KEYCLOAK_PASSWORD
+                name: le-postgres-secret
+          - name: VAULT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: VAULT_PASSWORD
+                name: le-postgres-secret
+          - name: ARGOCD_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: ARGOCD_PASSWORD
+                name: le-postgres-secret
+          - name: REDMINE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: REDMINE_PASSWORD
+                name: le-postgres-secret
+          - name: ITSM_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: ITSM_PASSWORD
+                name: le-postgres-secret
+          image: postgres:15-alpine
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            exec:
+              command:
+              - pg_isready
+              - -U
+              - leadmin
+            failureThreshold: 5
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: postgres
+          ports:
+          - containerPort: 5432
+            protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+              - pg_isready
+              - -U
+              - leadmin
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: "2"
+              memory: 4Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /var/lib/postgresql/data
+            name: postgres-data
+            subPath: pgdata
+          - mountPath: /docker-entrypoint-initdb.d
+            name: init-scripts
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          role: mgmt-tools
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: le-postgres-pvc
+        - configMap:
+            defaultMode: 493
+            name: le-postgres-init
+          name: init-scripts
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-03-17T16:13:36Z"
+      lastUpdateTime: "2026-03-17T16:13:36Z"
+      message: ReplicaSet "le-postgres-7ff75b7fc" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2026-03-31T06:50:21Z"
+      lastUpdateTime: "2026-03-31T06:50:21Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 10
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"le-postgres","project":"linkedeye"},"name":"le-postgres-svc","namespace":"le-postgres"},"spec":{"ports":[{"port":5432,"targetPort":5432}],"selector":{"app":"le-postgres"},"type":"ClusterIP"}}
+    labels:
+      app: le-postgres
+      project: linkedeye
+    name: le-postgres-svc
+    namespace: le-postgres
+  spec:
+    clusterIP: 172.20.67.14
+    clusterIPs:
+    - 172.20.67.14
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - port: 5432
+      protocol: TCP
+      targetPort: 5432
+    selector:
+      app: le-postgres
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  data:
+    ca.crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIDBTCCAe2gAwIBAgIIaD2eUcmw3GgwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjAzMTIwNjAxMDlaFw0zNjAzMDkwNjA2MDlaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDDzLiZviLx2bjEzapbQAc9qeWFu3t7ySX0NQw1oCwjoWbGSlG4207m6EFw
+      QuHEsLFg5404hSRh8FATiqvg6mlW1Fvmpknu7YFmJuVVbxpC4/5F2hd69ON1uZ4M
+      wWH0omBRTDfAs0iZ9j3+BOKt9CCVyGaN0gcasndAxize4E3BDsxMeG/X/NHNJfL1
+      9oFAFo6BIPyK6FUQM3AwYQSDgSnj5a3ksp1DTZNiVwnojn3/KjUBy72vvpdtkTOU
+      Jfu/imIkUhgWZ1fyFPLXAHGjA7B907PYCEstBOXRLqWkTCh7Ov6OBHgvrE5dcE/a
+      Bsh2OXDL+vk529sFjKVqyBHYc9GbAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTYXgh9iJwWhjnyuKzAP5Qttv+OKDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQCCrekj586a
+      nQT9XxXhiCl7nmjyOvSWMic5ChJg4n77Ry0GHF7crsjSPA9V2tgGm6+C27/aiwf9
+      rS9DWsNvsn9EHpZEQKOGFso90L32cXlo8c9YmEg2lEuZkA2hL69WchZ6aoQLyV68
+      38qiKOlgeBlNo3p4qMb7LGdvXLhYAKrHi8cpCT/H8b4PAlXsYZfEqPKAzrU0jTeq
+      Ug8UTHnLYJ7N/HAMHsprAEn5/UzP6x3BuZD20DyHrUNkdU7s9BjgtcleQmHK715R
+      JQzwx8zOUEBKfchONnreEuuMH17m8qJqVPsl6c2DC1Azi7tRFGJTQOYNBAXqiEzp
+      s+x6YEsT5iPc
+      -----END CERTIFICATE-----
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubernetes.io/description: Contains a CA bundle that can be used to verify the
+        kube-apiserver when using internal endpoints such as the internal service
+        IP or kubernetes.default.svc. No other usage is guaranteed across distributions
+        of Kubernetes clusters.
+    name: kube-root-ca.crt
+    namespace: le-postgres
+- apiVersion: v1
+  data:
+    init-databases.sh: |
+      #!/bin/bash
+      set -e
+
+      echo "=========================================="
+      echo " LinkedEye PostgreSQL — Init Databases"
+      echo "=========================================="
+
+      # Function to create DB + user if not exists
+      create_db_and_user() {
+        local DB=$1
+        local USER=$2
+        local PASS=$3
+
+        echo "Creating user: ${USER} / db: ${DB}"
+
+        psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
+          DO \$\$
+          BEGIN
+            IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${USER}') THEN
+              CREATE ROLE ${USER} LOGIN PASSWORD '${PASS}';
+            END IF;
+          END
+          \$\$;
+
+          SELECT 'CREATE DATABASE ${DB} OWNER ${USER}'
+          WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '${DB}')\gexec
+
+          GRANT ALL PRIVILEGES ON DATABASE ${DB} TO ${USER};
+      EOSQL
+      }
+
+      # Create all tool databases
+      create_db_and_user "jenkinsdb"  "jenkins"  "${JENKINS_PASSWORD}"
+      create_db_and_user "harbordb"   "harbor"   "${HARBOR_PASSWORD}"
+      create_db_and_user "keycloakdb" "keycloak" "${KEYCLOAK_PASSWORD}"
+      create_db_and_user "vaultdb"    "vault"    "${VAULT_PASSWORD}"
+      create_db_and_user "argocddb"   "argocd"   "${ARGOCD_PASSWORD}"
+      create_db_and_user "redminedb"  "redmine"  "${REDMINE_PASSWORD}"
+      create_db_and_user "itsmdb"     "itsm"     "${ITSM_PASSWORD}"
+
+      echo "=========================================="
+      echo " All databases created successfully!"
+      echo "=========================================="
+  kind: ConfigMap
+  metadata:
+    annotations:
+        {"apiVersion":"v1","data":{"init-databases.sh":"#!/bin/bash\nset -e\n\necho \"==========================================\"\necho \" LinkedEye PostgreSQL — Init Databases\"\necho \"==========================================\"\n\n# Function to create DB + user if not exists\ncreate_db_and_user() {\n  local DB=$1\n  local USER=$2\n  local PASS=$3\n\n  echo \"Creating user: ${USER} / db: ${DB}\"\n\n  psql -v ON_ERROR_STOP=1 --username \"$POSTGRES_USER\" \u003c\u003c-EOSQL\n    DO \\$\\$\n    BEGIN\n      IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${USER}') THEN\n        CREATE ROLE ${USER} LOGIN PASSWORD '${PASS}';\n      END IF;\n    END\n    \\$\\$;\n\n    SELECT 'CREATE DATABASE ${DB} OWNER ${USER}'\n    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '${DB}')\\gexec\n\n    GRANT ALL PRIVILEGES ON DATABASE ${DB} TO ${USER};\nEOSQL\n}\n\n# Create all tool databases\ncreate_db_and_user \"jenkinsdb\"  \"jenkins\"  \"${JENKINS_PASSWORD}\"\ncreate_db_and_user \"harbordb\"   \"harbor\"   \"${HARBOR_PASSWORD}\"\ncreate_db_and_user \"keycloakdb\" \"keycloak\" \"${KEYCLOAK_PASSWORD}\"\ncreate_db_and_user \"vaultdb\"    \"vault\"    \"${VAULT_PASSWORD}\"\ncreate_db_and_user \"argocddb\"   \"argocd\"   \"${ARGOCD_PASSWORD}\"\ncreate_db_and_user \"redminedb\"  \"redmine\"  \"${REDMINE_PASSWORD}\"\ncreate_db_and_user \"itsmdb\"     \"itsm\"     \"${ITSM_PASSWORD}\"\n\necho \"==========================================\"\necho \" All databases created successfully!\"\necho \"==========================================\"\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"le-postgres","project":"linkedeye"},"name":"le-postgres-init","namespace":"le-postgres"}}
+    labels:
+      app: le-postgres
+      project: linkedeye
+    name: le-postgres-init
+    namespace: le-postgres
+- apiVersion: v1
+  data:
+    argocd: OK|
+    databases: argocddb|harbordb|keycloakdb|postgres|vaultdb|
+    harbor: OK|
+    keycloak: OK|
+    vault: OK|
+  kind: ConfigMap
+  metadata:
+    name: pg-createdb-result
+    namespace: le-postgres
+- apiVersion: v1
+  data:
+    status: pending
+  kind: ConfigMap
+  metadata:
+    annotations:
+    name: pg-diag
+    namespace: le-postgres
+- apiVersion: v1
+  data:
+    alter_result: ALTER ROLE
+    databases: postgres|leadmin
+    hba: local|{all}|{all}||trust|host|{all}|{all}|127.0.0.1|trust|host|{all}|{all}|::1|trust|local|{replication}|{all}||trust|host|{replication}|{all}|127.0.0.1|trust|host|{replication}|{all}|::1|trust|host|{all}|{all}|all|scram-sha-256
+    roles: argocd|f|t|harbor|f|t|keycloak|f|t|leadmin|t|t|pg_checkpoint|f|f|pg_database_owner|f|f|pg_execute_server_program|f|f|pg_monitor|f|f|pg_read_all_data|f|f|pg_read_all_settings|f|f|pg_read_all_stats|f|f|pg_read_server_files|f|f|pg_signal_backend|f|f|pg_stat_scan_tables|f|f|pg_write_all_data|f|f|pg_write_server_files|f|f|vault|f|t
+    vault_test: 'psql: error: connection to server at  172.20.67.14 , port 5432 failed:
+      FATAL:  database  vaultdb  does not exist'
+  kind: ConfigMap
+  metadata:
+    name: pg-diag-result
+    namespace: le-postgres
+- apiVersion: v1
+  data:
+    ARGOCD_DB: YXJnb2NkZGI=
+    ARGOCD_PASSWORD: QXJnb0NEQEZpblNwb3QyMDI1IQ==
+    ARGOCD_USER: YXJnb2Nk
+    HARBOR_DB: aGFyYm9yZGI=
+    HARBOR_PASSWORD: SGFyYm9yQEZpblNwb3QyMDI1IQ==
+    HARBOR_USER: aGFyYm9y
+    ITSM_DB: aXRzbWRi
+    ITSM_PASSWORD: SXRzbUBGaW5TcG90MjAyNSE=
+    ITSM_USER: aXRzbQ==
+    JENKINS_DB: amVua2luc2Ri
+    JENKINS_PASSWORD: SmVua2luc0BGaW5TcG90MjAyNSE=
+    JENKINS_USER: amVua2lucw==
+    KEYCLOAK_DB: a2V5Y2xvYWtkYg==
+    KEYCLOAK_PASSWORD: S2V5Y2xvYWtARmluU3BvdDIwMjUh
+    KEYCLOAK_USER: a2V5Y2xvYWs=
+    POSTGRES_PASSWORD: TGVBZG1pbkBGaW5TcG90MjAyNSE=
+    POSTGRES_USER: bGVhZG1pbg==
+    REDMINE_DB: cmVkbWluZWRi
+    REDMINE_PASSWORD: UmVkbWluZUBGaW5TcG90MjAyNSE=
+    REDMINE_USER: cmVkbWluZQ==
+    VAULT_DB: dmF1bHRkYg==
+    VAULT_PASSWORD: VmF1bHRARmluU3BvdDIwMjUh
+    VAULT_USER: dmF1bHQ=
+  kind: Secret
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"labels":{"app":"le-postgres","project":"linkedeye"},"name":"le-postgres-secret","namespace":"le-postgres"},"stringData":{"ARGOCD_DB":"argocddb","ARGOCD_PASSWORD":"ArgoCD@FinSpot2025!","ARGOCD_USER":"argocd","HARBOR_DB":"harbordb","HARBOR_PASSWORD":"Harbor@FinSpot2025!","HARBOR_USER":"harbor","ITSM_DB":"itsmdb","ITSM_PASSWORD":"Itsm@FinSpot2025!","ITSM_USER":"itsm","JENKINS_DB":"jenkinsdb","JENKINS_PASSWORD":"Jenkins@FinSpot2025!","JENKINS_USER":"jenkins","KEYCLOAK_DB":"keycloakdb","KEYCLOAK_PASSWORD":"Keycloak@FinSpot2025!","KEYCLOAK_USER":"keycloak","POSTGRES_PASSWORD":"LeAdmin@FinSpot2025!","POSTGRES_USER":"leadmin","REDMINE_DB":"redminedb","REDMINE_PASSWORD":"Redmine@FinSpot2025!","REDMINE_USER":"redmine","VAULT_DB":"vaultdb","VAULT_PASSWORD":"Vault@FinSpot2025!","VAULT_USER":"vault"},"type":"Opaque"}
+    labels:
+      app: le-postgres
+      project: linkedeye
+    name: le-postgres-secret
+    namespace: le-postgres
+  type: Opaque
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"PersistentVolumeClaim","metadata":{"annotations":{},"labels":{"app":"le-postgres","project":"linkedeye"},"name":"le-postgres-pvc","namespace":"le-postgres"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"20Gi"}},"storageClassName":"gp3"}}
+      pv.kubernetes.io/bind-completed: "yes"
+      pv.kubernetes.io/bound-by-controller: "yes"
+      volume.beta.kubernetes.io/storage-provisioner: ebs.csi.aws.com
+      volume.kubernetes.io/selected-node: ip-10-15-1-169.ap-south-1.compute.internal
+      volume.kubernetes.io/storage-provisioner: ebs.csi.aws.com
+    finalizers:
+    - kubernetes.io/pvc-protection
+    labels:
+      app: le-postgres
+      project: linkedeye
+    name: le-postgres-pvc
+    namespace: le-postgres
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 20Gi
+    storageClassName: gp3
+    volumeMode: Filesystem
+    volumeName: pvc-a1edeca0-b9bf-4fca-9de4-c12ebf3e513d
+  status:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 20Gi
+    phase: Bound
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    annotations:
+        {"apiVersion":"v1","kind":"ServiceAccount","metadata":{"annotations":{},"name":"debug-sa","namespace":"le-postgres"}}
+    name: debug-sa
+    namespace: le-postgres
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: default
+    namespace: le-postgres
+kind: List
+metadata:
