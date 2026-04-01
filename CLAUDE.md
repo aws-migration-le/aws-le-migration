@@ -69,17 +69,21 @@ Every script appends its resource IDs to `/tmp/le-network-ids.env` (created fres
 | SSH Key | `~/.ssh/le-shared-k8s-key.pem` | Done |
 | EKS Cluster | `linkedeye-finspot-k8s-cluster` (v1.34, logging disabled) | Done |
 | EKS Node Group | `le-mgmt-tools-ng-v3` (2x m5.xlarge, AL2023, K8s v1.34) | Done |
-| EKS Addons | vpc-cni, coredns, kube-proxy, ebs-csi, guardduty-agent | Done |
+| EKS Addons | vpc-cni, coredns (hostNetwork), kube-proxy, ebs-csi, cilium, guardduty-agent | Done |
+| Hybrid Node 1 | `mi-071e737d121051583` (192.168.100.72, Ubuntu 22.04) | Done |
+| Hybrid Node 2 | `mi-0e0c4253be3fb4d14` (172.16.0.62, Ubuntu 22.04) | Done |
 | ALB | `linkedeye-tools-alb` (2 EIPs: 3.109.131.36, 43.205.77.93) | Done |
+| ALB Rules | 8 tool FQDNs + 18 client FQDNs, sticky sessions enabled | Done |
 | Security Groups | eks-cluster, eks-hybrid, jenkins-ec2, mgmt-ec2, alb, guardduty | Done |
 | IAM Roles | eks-cluster, eks-nodegroup, eks-hybrid-node, mgmt-ec2, container-insights, velero-irsa | Done |
+| IAM Policy | `LinkedEye-DevOps-Extra` (SSM, ECR, EC2-Connect, EFS, KMS, CW Logs) | Done |
 | KMS Keys | linkedeye-kms-eks, linkedeye-kms-vault, linkedeye-kms-ebs | Done |
 | WAF | `linkedeye-waf` | Done |
 | GuardDuty | Detector `fa47792e40684b45bfa76c1b4a1a48a4` | Done |
 | VPC Flow Logs | `/aws/vpc/flowlogs/linkedeye` (90-day retention) | Done |
 | S3 — Velero | `linkedeye-velero-backups-654697417727` | Done |
 | S3 — Audit | `linkedeye-audit-logs-654697417727` | Done |
-| Hybrid Nodes | On-prem per client (15 clients, 2 nodes each) | Pending (no VPN — public API) |
+| Hybrid Nodes | 2 on-prem nodes registered (192.168.100.72, 172.16.0.62) | Done |
 | Client Namespaces | 15 prod + 3 non-prod | Script ready (06-kubernetes/11) |
 | Client ALB Rules | 15 client FQDNs (fs-le-*.finspot.in) | Script ready (05-loadbalancer/02) |
 | VPN | — | NOT NEEDED (hybrid nodes use public EKS API) |
@@ -108,7 +112,10 @@ ALB: linkedeye-tools-alb → EKS node groups
 ## Key Configuration
 
 - **AMI:** `ami-0f58b397bc5c1f2e8` (Ubuntu 22.04 LTS, ap-south-1)
-- **EKS:** v1.34, single node group `le-mgmt-tools-ng-v3` (2x m5.xlarge, AL2023, K8s v1.34)
+- **EKS:** v1.34, single node group `le-mgmt-tools-ng-v3` (2x m5.xlarge, AL2023, K8s v1.34), 2 hybrid on-prem nodes
+- **Node access:** SSM Session Manager (`aws ssm start-session --target <instance-id>`)
+- **Monitoring:** kube-prometheus-stack (Prometheus, Grafana :30090, Alertmanager) in le-monitoring
+- **CoreDNS:** hostNetwork=true, nodeSelector=mgmt-tools, forward to VPC DNS (/etc/resolv.conf)
 - **SSH key:** `~/.ssh/le-shared-k8s-key.pem`
 - **Management tools:** Running as pods on EKS node groups (not standalone EC2s)
 - **VPN:** Set `FORTIGATE_PUBLIC_IP` in `.env.shared` then run `01-network/04-create-vpn.sh`
