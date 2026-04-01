@@ -1,0 +1,189 @@
+# ============================================================
+# ALB Routing Configuration (not K8s Ingress — AWS ALB rules)
+# ALB: linkedeye-tools-alb
+# DNS: linkedeye-tools-alb-922526253.ap-south-1.elb.amazonaws.com
+# EIPs: 3.109.131.36, 43.205.77.93
+# HTTP (80) → HTTPS redirect
+# HTTPS (443) → Host-based routing to NodePorts
+# Sticky sessions enabled on all target groups
+# ============================================================
+
+# Tool FQDN → Target Group → NodePort mapping
+rules:
+  - priority: 1
+    host: le-jenkins.finspot.in
+    targetGroup: linkedeye-tg-jenkins
+    nodePort: 8080
+
+  - priority: 2
+    host: le-argocd.finspot.in
+    targetGroup: linkedeye-tg-argocd
+    nodePort: 8082
+
+  - priority: 3
+    host: le-harbor.finspot.in
+    targetGroup: linkedeye-tg-harbor
+    nodePort: 8083
+
+  - priority: 4
+    host: le-keycloak.finspot.in
+    targetGroup: linkedeye-tg-keycloak
+    nodePort: 8081
+
+  - priority: 5
+    host: le-itsm.finspot.in
+    targetGroup: linkedeye-tg-itsm
+    nodePort: 80
+
+  - priority: 6
+    host: le-vault.finspot.in
+    targetGroup: linkedeye-tg-vault
+    nodePort: 8200
+
+  - priority: 7
+    host: le-minio.finspot.in
+    targetGroup: linkedeye-tg-minio
+    nodePort: 30901
+
+  - priority: 8
+    host: le-itsm.api.finspot.in
+    targetGroup: linkedeye-tg-itsm
+    nodePort: 80
+
+  - priority: 10
+    host: indmoney-prod-le.finspot.in
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 11
+    host: prod-le.plindia.com
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 12
+    host: prod-le.neo-wealth.com
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 13
+    host: prod-le.flattrade.in
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 14
+    host: fs-le-isv.finspot.in
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 15
+    host: w2w-prod-le.way2wealth.com
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 16
+    host: fs-ifsc-le.finspot.in
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 17
+    host: indmoney-ifsc-le.finspot.in
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 18
+    host: lemonn-prod-le.finspot.in
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 19
+    host: fs-le-dx.finspot.in
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 20
+    host: fs-le-prod-mirae.com
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 21
+    host: fs-le-prod-smifs.com
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 22
+    host: indmoney-dr-le.finspot.in
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 23
+    host: fs-le-dr.finspot.in
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 24
+    host: fs-le-uat.finspot.in
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 25
+    host: fs-le-dev.finspot.in
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 26
+    host: fs-le-dev1.finspot.in
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+  - priority: 27
+    host: fs-le-dev2.finspot.in
+    targetGroup: linkedeye-tg-client-itsm
+    nodePort: 80
+
+
+# Target Group → Actual NodePort (registered targets)
+# TG default ports don't match actual NodePorts
+# Targets registered with override ports:
+targetGroups:
+  - name: linkedeye-tg-jenkins
+    nodePort: 30080
+    instances: [i-04e7a47fcf62769ed, i-0ac45bcd362063c2f]
+
+  - name: linkedeye-tg-argocd
+    nodePort: 30082
+    instances: [i-04e7a47fcf62769ed, i-0ac45bcd362063c2f]
+
+  - name: linkedeye-tg-harbor
+    nodePort: 30083
+    instances: [i-04e7a47fcf62769ed, i-0ac45bcd362063c2f]
+
+  - name: linkedeye-tg-keycloak
+    nodePort: 30081
+    instances: [i-04e7a47fcf62769ed, i-0ac45bcd362063c2f]
+
+  - name: linkedeye-tg-vault
+    nodePort: 30200
+    instances: [i-04e7a47fcf62769ed, i-0ac45bcd362063c2f]
+
+  - name: linkedeye-tg-itsm
+    nodePort: 80
+    instances: [i-04e7a47fcf62769ed, i-0ac45bcd362063c2f]
+
+  - name: linkedeye-tg-minio
+    nodePort: 31114
+    instances: [i-04e7a47fcf62769ed, i-0ac45bcd362063c2f]
+
+  - name: linkedeye-tg-client-itsm
+    nodePort: 80
+    instances: [i-04e7a47fcf62769ed, i-0ac45bcd362063c2f]
+
+# Cloudflare DNS (CNAME → ALB)
+dns:
+  - le-jenkins.finspot.in → linkedeye-tools-alb-922526253.ap-south-1.elb.amazonaws.com
+  - le-argocd.finspot.in → linkedeye-tools-alb-922526253.ap-south-1.elb.amazonaws.com
+  - le-harbor.finspot.in → linkedeye-tools-alb-922526253.ap-south-1.elb.amazonaws.com
+  - le-keycloak.finspot.in → linkedeye-tools-alb-922526253.ap-south-1.elb.amazonaws.com
+  - le-vault.finspot.in → linkedeye-tools-alb-922526253.ap-south-1.elb.amazonaws.com
+  - le-itsm.finspot.in → linkedeye-tools-alb-922526253.ap-south-1.elb.amazonaws.com
+  - le-itsm.api.finspot.in → linkedeye-tools-alb-922526253.ap-south-1.elb.amazonaws.com
+  - le-minio.finspot.in → linkedeye-tools-alb-922526253.ap-south-1.elb.amazonaws.com
